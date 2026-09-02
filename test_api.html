@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Railway API Test</h1>
+    <button onclick="testAPI()">Test Search API</button>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'https://curseforge-mod-downloader-production.up.railway.app/api';
+        
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Testing API URL:', `${API_BASE}/search/mods?q=JEI`);
+                
+                const response = await fetch(`${API_BASE}/search/mods?q=JEI`);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                resultsDiv.innerHTML = `
+                    <h2>Success!</h2>
+                    <p>Status: ${response.status}</p>
+                    <p>Results found: ${data.results ? data.results.length : 0}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = `
+                    <h2>Error!</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
