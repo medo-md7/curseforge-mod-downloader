@@ -58,6 +58,12 @@ def serve_frontend():
     return send_from_directory('.', 'index.html')
 
 
+@app.route('/test_api.html')
+def serve_test_page():
+    """Serve the API test page for debugging"""
+    return send_from_directory('.', 'test_api.html')
+
+
 @app.route('/api/download/single', methods=['POST'])
 def download_single_mod():
     """Download a single mod by name with optional version selection"""
