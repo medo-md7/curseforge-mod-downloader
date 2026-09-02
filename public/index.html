@@ -357,6 +357,11 @@
             ? 'http://127.0.0.1:5000/api' 
             : 'https://curseforge-mod-downloader-production.up.railway.app/api';
         
+        // Debug: Log API configuration
+        console.log('API Configuration:');
+        console.log('Hostname:', window.location.hostname);
+        console.log('API_BASE:', API_BASE);
+        
         let currentJobId = null;
         let uploadedFile = null;
         let pollInterval = null;
@@ -417,8 +422,23 @@
             resultsList.innerHTML = '<p class="text-gray-500">Searching...</p>';
 
             try {
+                console.log('Searching for:', query);
+                console.log('API_BASE:', API_BASE);
+                console.log('Full URL:', `${API_BASE}/search/mods?q=${encodeURIComponent(query)}`);
+                
                 const response = await fetch(`${API_BASE}/search/mods?q=${encodeURIComponent(query)}`);
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
                 const data = await response.json();
+                console.log('Search results:', data);
 
                 if (data.results && data.results.length > 0) {
                     resultsList.innerHTML = data.results.map(mod => `
@@ -443,7 +463,8 @@
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                resultsList.innerHTML = '<p class="text-red-500">Error searching for mods. Please try again.</p>';
+                resultsList.innerHTML = `<p class="text-red-500">Error searching for mods: ${error.message}. Please try again.</p>`;
+                resultsList.innerHTML += `<p class="text-xs text-gray-400 mt-2">API URL: ${API_BASE}/search/mods?q=${encodeURIComponent(query)}</p>`;
             } finally {
                 searchBtn.disabled = false;
                 searchBtn.textContent = 'Search';
