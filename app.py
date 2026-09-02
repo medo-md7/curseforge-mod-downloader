@@ -1,0 +1,423 @@
+#!/usr/bin/env python3
+"""
+Flask backend for CurseForge Mod Downloader web application
+"""
+
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+import os
+import sys
+from pathlib import Path
+import threading
+import uuid
+from datetime import datetime
+import json
+
+# Add the parent directory to path to import the downloader module
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+app = Flask(__name__)
+# Configure CORS to allow requests from Cloudflare Pages and local development
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:5000",
+            "http://127.0.0.1:5000",
+            "https://mod-depot.pages.dev",  # Your Cloudflare Pages domain
+            "*"  # Allow all origins during development
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+# Configuration
+UPLOAD_FOLDER = Path('uploads')
+DOWNLOAD_FOLDER = Path('downloads')
+UPLOAD_FOLDER.mkdir(exist_ok=True)
+DOWNLOAD_FOLDER.mkdir(exist_ok=True)
+
+# Store job status in memory (in production, use Redis or database)
+jobs = {}
+
+from curseforge_downloader_module import (
+    parse_html_content,
+    download_mod_by_name,
+    process_bulk_download,
+    search_mod_by_name,
+    get_mod_versions,
+    get_mod_details,
+    download_specific_version,
+    get_mod_id_from_slug
+)
+
+
+@app.route('/')
+def serve_frontend():
+    """Serve the main HTML file"""
+    return send_from_directory('.', 'index.html')
+
+
+@app.route('/api/download/single', methods=['POST'])
+def download_single_mod():
+    """Download a single mod by name with optional version selection"""
+    try:
+        data = request.json
+        mod_name = data.get('mod_name')
+        version_id = data.get('version_id')
+        download_url = data.get('download_url')
+        file_name = data.get('file_name')
+        
+        if not mod_name:
+            return jsonify({'error': 'Mod name is required'}), 400
+        
+        # Create a unique job ID
+        job_id = str(uuid.uuid4())
+        
+        # Initialize job status
+        jobs[job_id] = {
+            'status': 'processing',
+            'type': 'single',
+            'mod_name': mod_name,
+            'version_id': version_id,
+            'download_url': download_url,
+            'file_name': file_name,
+            'progress': 0,
+            'result': None,
+            'error': None,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Start download in background thread
+        thread = threading.Thread(
+            target=run_single_download,
+            args=(job_id, mod_name, version_id, download_url, file_name)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({'job_id': job_id, 'status': 'processing'})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/download/bulk', methods=['POST'])
+def download_bulk_mods():
+    """Download mods from uploaded modlist.html file"""
+    try:
+        print(f"Received bulk download request")
+        print(f"Files in request: {list(request.files.keys())}")
+        
+        if 'file' not in request.files:
+            print("No file in request")
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        print(f"File received: {file.filename}")
+        
+        if file.filename == '':
+            print("Empty filename")
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename.endswith('.html'):
+            print(f"Invalid file type: {file.filename}")
+            return jsonify({'error': 'File must be an HTML file'}), 400
+        
+        # Save uploaded file
+        filename = f"{uuid.uuid4()}_{file.filename}"
+        filepath = UPLOAD_FOLDER / filename
+        file.save(filepath)
+        print(f"File saved to: {filepath}")
+        
+        # Create a unique job ID
+        job_id = str(uuid.uuid4())
+        print(f"Created job ID: {job_id}")
+        
+        # Initialize job status
+        jobs[job_id] = {
+            'status': 'processing',
+            'type': 'bulk',
+            'filename': file.filename,
+            'progress': 0,
+            'total_mods': 0,
+            'result': None,
+            'error': None,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Start bulk download in background thread
+        thread = threading.Thread(
+            target=run_bulk_download,
+            args=(job_id, filepath)
+        )
+        thread.daemon = True
+        thread.start()
+        print("Background thread started")
+        
+        return jsonify({'job_id': job_id, 'status': 'processing'})
+        
+    except Exception as e:
+        print(f"Error in bulk download: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/jobs/<job_id>', methods=['GET'])
+def get_job_status(job_id):
+    """Get the status of a download job"""
+    if job_id not in jobs:
+        return jsonify({'error': 'Job not found'}), 404
+    
+    return jsonify(jobs[job_id])
+
+
+@app.route('/api/jobs', methods=['GET'])
+def list_jobs():
+    """List all jobs"""
+    return jsonify(list(jobs.values()))
+
+
+@app.route('/api/search/mods', methods=['GET'])
+def search_mods():
+    """Search for mods by name"""
+    try:
+        query = request.args.get('q', '')
+        if not query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        results = search_mod_by_name(query)
+        
+        # Format results for frontend
+        formatted_results = []
+        for mod in results:
+            formatted_results.append({
+                'id': mod.get('id'),
+                'name': mod.get('name'),
+                'slug': mod.get('slug'),
+                'summary': mod.get('summary'),
+                'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
+                'download_count': mod.get('downloadCount'),
+                'categories': [cat.get('name') for cat in mod.get('categories', [])]
+            })
+        
+        return jsonify({'results': formatted_results})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mod/<mod_id>/versions', methods=['GET'])
+def get_mod_versions_endpoint(mod_id):
+    """Get available versions for a mod"""
+    try:
+        game_version = request.args.get('game_version', '1.20.1')
+        mod_loader_type = request.args.get('mod_loader_type', '1')  # 1 = Forge, 2 = Fabric
+        
+        versions = get_mod_versions(mod_id, game_version, int(mod_loader_type))
+        
+        # Format versions for frontend
+        formatted_versions = []
+        for file in versions:
+            release_type = file.get('releaseType', 1)  # 1 = Release, 2 = Beta, 3 = Alpha
+            release_type_names = {1: 'Release', 2: 'Beta', 3: 'Alpha'}
+            
+            formatted_versions.append({
+                'id': file.get('id'),
+                'file_name': file.get('fileName'),
+                'display_name': file.get('displayName'),
+                'file_date': file.get('fileDate'),
+                'file_length': file.get('fileLength'),
+                'release_type': release_type_names.get(release_type, 'Unknown'),
+                'game_versions': file.get('gameVersions', []),
+                'download_url': file.get('downloadUrl')
+            })
+        
+        return jsonify({'versions': formatted_versions})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mod/<mod_id>/details', methods=['GET'])
+def get_mod_details_endpoint(mod_id):
+    """Get detailed information about a mod"""
+    try:
+        details = get_mod_details(mod_id)
+        
+        if not details:
+            return jsonify({'error': 'Mod not found'}), 404
+        
+        formatted_details = {
+            'id': details.get('id'),
+            'name': details.get('name'),
+            'slug': details.get('slug'),
+            'summary': details.get('summary'),
+            'description': details.get('description'),
+            'author': details.get('author') if isinstance(details.get('author'), dict) else details.get('author', ''),
+            'download_count': details.get('downloadCount'),
+            'categories': [cat.get('name') for cat in details.get('categories', [])],
+            'latest_files': details.get('latestFiles', [])
+        }
+        
+        return jsonify(formatted_details)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/preview/html', methods=['POST'])
+def preview_html_file():
+    """Preview the contents of an uploaded HTML file"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename.endswith('.html'):
+            return jsonify({'error': 'File must be an HTML file'}), 400
+        
+        # Read file content
+        html_content = file.read().decode('utf-8')
+        
+        # Parse HTML to extract mod links
+        mod_links = parse_html_content(html_content)
+        
+        if not mod_links:
+            return jsonify({'error': 'No mod links found in HTML file'}), 400
+        
+        # Get details for each mod (limit to first 10 for preview performance)
+        preview_mods = []
+        for i, link in enumerate(mod_links[:10]):
+            try:
+                mod_slug = link.split('/')[-1]
+                # Try to get mod ID from slug
+                mod_id = get_mod_id_from_slug(link)
+                if mod_id:
+                    details = get_mod_details(mod_id)
+                    if details:
+                        preview_mods.append({
+                            'name': details.get('name'),
+                            'slug': details.get('slug'),
+                            'summary': details.get('summary'),
+                            'download_count': details.get('downloadCount'),
+                            'url': link
+                        })
+                        continue
+                
+                # Fallback if we can't get details
+                preview_mods.append({
+                    'name': mod_slug,
+                    'slug': mod_slug,
+                    'summary': 'Details not available',
+                    'download_count': 0,
+                    'url': link
+                })
+            except Exception as e:
+                preview_mods.append({
+                    'name': link.split('/')[-1],
+                    'slug': link.split('/')[-1],
+                    'summary': f'Error: {str(e)}',
+                    'download_count': 0,
+                    'url': link
+                })
+        
+        return jsonify({
+            'total_mods': len(mod_links),
+            'preview_mods': preview_mods,
+            'showing_more': len(mod_links) > 10,
+            'additional_count': len(mod_links) - 10
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def run_single_download(job_id, mod_name, version_id=None, download_url=None, file_name=None):
+    """Run single mod download in background"""
+    try:
+        jobs[job_id]['progress'] = 10
+        
+        # If version-specific download is requested
+        if version_id and download_url and file_name:
+            result = download_specific_version(download_url, file_name, DOWNLOAD_FOLDER)
+        else:
+            # Download the mod by name (auto-select version)
+            result = download_mod_by_name(mod_name, DOWNLOAD_FOLDER)
+        
+        jobs[job_id]['progress'] = 100
+        
+        if result['success']:
+            jobs[job_id]['status'] = 'completed'
+            jobs[job_id]['result'] = {
+                'success': True,
+                'mod_name': mod_name,
+                'file_name': result.get('file_name'),
+                'file_size_mb': result.get('file_size_mb', 0),
+                'download_url': result.get('download_url')
+            }
+        else:
+            jobs[job_id]['status'] = 'failed'
+            jobs[job_id]['error'] = result.get('error', 'Unknown error')
+            jobs[job_id]['result'] = {
+                'success': False,
+                'mod_name': mod_name,
+                'error': result.get('error'),
+                'manual_url': result.get('manual_url')
+            }
+            
+    except Exception as e:
+        jobs[job_id]['status'] = 'failed'
+        jobs[job_id]['error'] = str(e)
+
+
+def run_bulk_download(job_id, html_filepath):
+    """Run bulk download in background"""
+    try:
+        jobs[job_id]['progress'] = 5
+        
+        # Parse HTML file
+        with open(html_filepath, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        mod_links = parse_html_content(html_content)
+        
+        if not mod_links:
+            jobs[job_id]['status'] = 'failed'
+            jobs[job_id]['error'] = 'No mod links found in HTML file'
+            return
+        
+        jobs[job_id]['total_mods'] = len(mod_links)
+        jobs[job_id]['progress'] = 10
+        
+        # Define progress callback
+        def progress_callback(current, total):
+            progress = 10 + int((current / total) * 85)  # 10-95% range
+            jobs[job_id]['progress'] = progress
+        
+        # Process bulk download
+        result = process_bulk_download(mod_links, DOWNLOAD_FOLDER, job_id, progress_callback)
+        
+        jobs[job_id]['progress'] = 100
+        jobs[job_id]['status'] = 'completed'
+        jobs[job_id]['result'] = result
+        
+        # Clean up uploaded file
+        try:
+            os.remove(html_filepath)
+        except:
+            pass
+            
+    except Exception as e:
+        jobs[job_id]['status'] = 'failed'
+        jobs[job_id]['error'] = str(e)
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    app.run(debug=debug, host='0.0.0.0', port=port)
