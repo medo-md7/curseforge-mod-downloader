@@ -111,7 +111,9 @@ def search_mod_by_name(mod_name):
         params = {
             "gameId": 432,  # Minecraft game ID
             "searchFilter": mod_name,
-            "pageSize": 10
+            "pageSize": 20,  # Increase page size to get more results
+            "sortField": 2,  # Sort by relevance (2 = Popularity, might help with exact matches)
+            "sortOrder": "desc"
         }
         
         response = requests.get(search_url, headers=headers, params=params, timeout=10)
@@ -119,7 +121,12 @@ def search_mod_by_name(mod_name):
         if response.status_code == 200:
             data = response.json()
             if data.get('data'):
-                return data['data']
+                # Try to prioritize exact matches
+                results = data['data']
+                exact_matches = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower()]
+                if exact_matches:
+                    return exact_matches + [mod for mod in results if mod not in exact_matches]
+                return results
         
         return []
     except Exception as e:

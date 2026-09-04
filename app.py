@@ -267,7 +267,9 @@ def search_mods():
         if not query:
             return jsonify({'error': 'Search query is required'}), 400
         
+        print(f"Search query: {query}")
         results = search_mod_by_name(query)
+        print(f"Search results count: {len(results)}")
         
         # Format results for frontend
         formatted_results = []
