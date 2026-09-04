@@ -93,14 +93,7 @@
                 
                 <div class="flex gap-4 mb-4">
                     <select id="game-version-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                        <option value="1.20.1">Minecraft 1.20.1</option>
-                        <option value="1.20">Minecraft 1.20</option>
-                        <option value="1.19.4">Minecraft 1.19.4</option>
-                        <option value="1.19.3">Minecraft 1.19.3</option>
-                        <option value="1.19.2">Minecraft 1.19.2</option>
-                        <option value="1.18.2">Minecraft 1.18.2</option>
-                        <option value="1.18.1">Minecraft 1.18.1</option>
-                        <option value="1.16.5">Minecraft 1.16.5</option>
+                        <option value="all">All Versions</option>
                     </select>
                     <select id="mod-loader-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                         <option value="1">Forge</option>
@@ -489,8 +482,33 @@
             versionList.innerHTML = '<p class="text-gray-500">Loading versions...</p>';
 
             try {
-                const response = await fetch(`${API_BASE}/mod/${selectedMod.id}/versions?game_version=${gameVersion}&mod_loader_type=${modLoaderType}`);
+                // Build URL with optional game version filter
+                let url = `${API_BASE}/mod/${selectedMod.id}/versions?mod_loader_type=${modLoaderType}`;
+                if (gameVersion !== 'all') {
+                    url += `&game_version=${gameVersion}`;
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
+
+                // Update game version dropdown with available versions
+                if (data.game_versions && data.game_versions.length > 0) {
+                    const gameVersionSelect = document.getElementById('game-version-select');
+                    const currentValue = gameVersionSelect.value;
+                    
+                    gameVersionSelect.innerHTML = '<option value="all">All Versions</option>';
+                    data.game_versions.forEach(version => {
+                        const option = document.createElement('option');
+                        option.value = version;
+                        option.textContent = version;
+                        gameVersionSelect.appendChild(option);
+                    });
+                    
+                    // Restore selection if it still exists
+                    if (data.game_versions.includes(currentValue)) {
+                        gameVersionSelect.value = currentValue;
+                    }
+                }
 
                 if (data.versions && data.versions.length > 0) {
                     versionList.innerHTML = data.versions.map((version, index) => `
