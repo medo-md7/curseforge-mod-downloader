@@ -692,13 +692,41 @@
                                 <p class="text-sm text-green-600">Size: ${result.file_size_mb} MB</p>
                             </div>
                         </div>
-                        <button onclick="resetSingleDownload()" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                            Download Another
+                        <button onclick="downloadFile('${result.download_url}', '${result.file_name}')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors">
+                            Download to Computer
                         </button>
                     </div>
                 </div>
             `;
             resultDiv.classList.remove('hidden');
+        }
+
+        async function downloadFile(downloadUrl, fileName) {
+            try {
+                const response = await fetch(`${API_BASE}/download/direct`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ download_url: downloadUrl, file_name: fileName })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    const errorData = await response.json();
+                    alert('Download failed: ' + errorData.error);
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Download failed: ' + error.message);
+            }
         }
 
         function resetSingleDownload() {

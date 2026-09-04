@@ -3,7 +3,7 @@
 Flask backend for CurseForge Mod Downloader web application
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 import os
 import sys
@@ -183,6 +183,43 @@ def get_job_status(job_id):
 def list_jobs():
     """List all jobs"""
     return jsonify(list(jobs.values()))
+
+
+@app.route('/api/download/direct', methods=['POST'])
+def download_direct():
+    """Download a file directly without saving to server"""
+    try:
+        data = request.json
+        download_url = data.get('download_url')
+        file_name = data.get('file_name')
+        
+        if not download_url or not file_name:
+            return jsonify({'error': 'Download URL and file name are required'}), 400
+        
+        # Stream the file directly to the client
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        
+        response = requests.get(download_url, headers=headers, stream=True, timeout=60)
+        
+        if response.status_code == 200:
+            def generate():
+                for chunk in response.iter_content(chunk_size=8192):
+                    yield chunk
+            
+            return Response(
+                generate(),
+                headers={
+                    'Content-Disposition': f'attachment; filename="{file_name}"',
+                    'Content-Type': 'application/octet-stream'
+                }
+            )
+        else:
+            return jsonify({'error': f'Failed to download file: HTTP {response.status_code}'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/search/mods', methods=['GET'])
