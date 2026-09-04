@@ -322,6 +322,34 @@ def get_mod_details_endpoint(mod_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/test/html-parse', methods=['POST'])
+def test_html_parse():
+    """Test HTML parsing without API calls"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Read file content
+        html_content = file.read().decode('utf-8')
+        
+        # Parse HTML to extract mod links
+        mod_links = parse_html_content(html_content)
+        
+        return jsonify({
+            'html_length': len(html_content),
+            'html_preview': html_content[:500],
+            'mod_links_count': len(mod_links),
+            'mod_links': mod_links
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/preview/html', methods=['POST'])
 def preview_html_file():
     """Preview the contents of an uploaded HTML file"""
@@ -338,12 +366,15 @@ def preview_html_file():
         
         # Read file content
         html_content = file.read().decode('utf-8')
+        print(f"HTML content length: {len(html_content)}")
+        print(f"HTML content preview: {html_content[:200]}")
         
         # Parse HTML to extract mod links
         mod_links = parse_html_content(html_content)
+        print(f"Found {len(mod_links)} mod links: {mod_links}")
         
         if not mod_links:
-            return jsonify({'error': 'No mod links found in HTML file'}), 400
+            return jsonify({'error': 'No mod links found in HTML file. Make sure your HTML file contains links to curseforge.com/minecraft/mc-mods'}), 400
         
         # Get details for each mod (limit to first 10 for preview performance)
         preview_mods = []
@@ -439,27 +470,68 @@ def run_bulk_download(job_id, html_filepath):
         with open(html_filepath, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
+        print(f"HTML content length: {len(html_content)}")
+        print(f"HTML content preview: {html_content[:200]}")
+        
         mod_links = parse_html_content(html_content)
+        print(f"Found {len(mod_links)} mod links: {mod_links}")
         
         if not mod_links:
             jobs[job_id]['status'] = 'failed'
-            jobs[job_id]['error'] = 'No mod links found in HTML file'
+            jobs[job_id]['error'] = 'No mod links found in HTML file. Make sure your HTML file contains links to curseforge.com/minecraft/mc-mods'
             return
         
         jobs[job_id]['total_mods'] = len(mod_links)
         jobs[job_id]['progress'] = 10
         
-        # Define progress callback
-        def progress_callback(current, total):
-            progress = 10 + int((current / total) * 85)  # 10-95% range
-            jobs[job_id]['progress'] = progress
-        
-        # Process bulk download
-        result = process_bulk_download(mod_links, DOWNLOAD_FOLDER, job_id, progress_callback)
+        # Return mod information for direct download by frontend
+        mod_info = []
+        for link in mod_links:
+            try:
+                mod_slug = link.split('/')[-1]
+                mod_id = get_mod_id_from_slug(link)
+                
+                if mod_id:
+                    # Get latest version for the mod
+                    versions = get_mod_versions(mod_id, None, 1)  # Get all versions, Forge loader
+                    if versions:
+                        latest_version = versions[0]
+                        mod_info.append({
+                            'name': mod_slug,
+                            'download_url': latest_version.get('downloadUrl'),
+                            'file_name': latest_version.get('fileName'),
+                            'file_length': latest_version.get('fileLength', 0),
+                            'source_url': link,
+                            'success': True
+                        })
+                    else:
+                        mod_info.append({
+                            'name': mod_slug,
+                            'error': 'No versions available',
+                            'source_url': link,
+                            'success': False
+                        })
+                else:
+                    mod_info.append({
+                        'name': mod_slug,
+                        'error': 'Could not get mod ID',
+                        'source_url': link,
+                        'success': False
+                    })
+            except Exception as e:
+                mod_info.append({
+                    'name': link.split('/')[-1],
+                    'error': str(e),
+                    'source_url': link,
+                    'success': False
+                })
         
         jobs[job_id]['progress'] = 100
         jobs[job_id]['status'] = 'completed'
-        jobs[job_id]['result'] = result
+        jobs[job_id]['result'] = {
+            'total_mods': len(mod_links),
+            'mods': mod_info
+        }
         
         # Clean up uploaded file
         try:
@@ -468,6 +540,7 @@ def run_bulk_download(job_id, html_filepath):
             pass
             
     except Exception as e:
+        print(f"Error in run_bulk_download: {e}")
         jobs[job_id]['status'] = 'failed'
         jobs[job_id]['error'] = str(e)
 

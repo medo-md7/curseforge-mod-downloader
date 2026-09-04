@@ -32,6 +32,7 @@ def parse_html_content(html_content):
         
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
+            # Check for both www and non-www curseforge.com
             if 'curseforge.com/minecraft/mc-mods' in href:
                 links.append(href)
         
