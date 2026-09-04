@@ -126,8 +126,8 @@ def search_mod_by_name(mod_name):
         return []
 
 
-def get_mod_versions(mod_id, game_version="1.20.1", mod_loader_type=1):
-    """Get available versions for a mod."""
+def get_mod_versions(mod_id, game_version=None, mod_loader_type=1):
+    """Get available versions for a mod. If game_version is None, returns all versions."""
     try:
         headers = {
             "Accept": "application/json",
@@ -136,9 +136,12 @@ def get_mod_versions(mod_id, game_version="1.20.1", mod_loader_type=1):
         
         url = f"{CURSEFORGE_API_BASE}/mods/{mod_id}/files"
         params = {
-            "gameVersion": game_version,
             "modLoaderType": mod_loader_type
         }
+        
+        # Only add game_version filter if specified
+        if game_version:
+            params["gameVersion"] = game_version
         
         response = requests.get(url, headers=headers, params=params, timeout=10)
         

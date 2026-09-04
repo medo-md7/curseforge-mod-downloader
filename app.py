@@ -218,10 +218,19 @@ def search_mods():
 def get_mod_versions_endpoint(mod_id):
     """Get available versions for a mod"""
     try:
-        game_version = request.args.get('game_version', '1.20.1')
+        game_version = request.args.get('game_version', None)  # None = all versions
         mod_loader_type = request.args.get('mod_loader_type', '1')  # 1 = Forge, 2 = Fabric
         
         versions = get_mod_versions(mod_id, game_version, int(mod_loader_type))
+        
+        # Extract all unique game versions from the files
+        all_game_versions = set()
+        for file in versions:
+            for version in file.get('gameVersions', []):
+                all_game_versions.add(version)
+        
+        # Sort game versions
+        sorted_game_versions = sorted(list(all_game_versions), reverse=True)
         
         # Format versions for frontend
         formatted_versions = []
@@ -240,7 +249,10 @@ def get_mod_versions_endpoint(mod_id):
                 'download_url': file.get('downloadUrl')
             })
         
-        return jsonify({'versions': formatted_versions})
+        return jsonify({
+            'versions': formatted_versions,
+            'game_versions': sorted_game_versions
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
