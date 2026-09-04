@@ -130,38 +130,65 @@ def download_bulk_mods():
             print(f"Invalid file type: {file.filename}")
             return jsonify({'error': 'File must be an HTML file'}), 400
         
-        # Save uploaded file
-        filename = f"{uuid.uuid4()}_{file.filename}"
-        filepath = UPLOAD_FOLDER / filename
-        file.save(filepath)
-        print(f"File saved to: {filepath}")
+        # Read file content directly instead of saving
+        html_content = file.read().decode('utf-8')
+        print(f"HTML content length: {len(html_content)}")
+        print(f"HTML content preview: {html_content[:200]}")
         
-        # Create a unique job ID
-        job_id = str(uuid.uuid4())
-        print(f"Created job ID: {job_id}")
+        # Parse HTML to extract mod links
+        mod_links = parse_html_content(html_content)
+        print(f"Found {len(mod_links)} mod links: {mod_links}")
         
-        # Initialize job status
-        jobs[job_id] = {
-            'status': 'processing',
-            'type': 'bulk',
-            'filename': file.filename,
-            'progress': 0,
-            'total_mods': 0,
-            'result': None,
-            'error': None,
-            'created_at': datetime.now().isoformat()
-        }
+        if not mod_links:
+            return jsonify({'error': 'No mod links found in HTML file. Make sure your HTML file contains links to curseforge.com/minecraft/mc-mods'}), 400
         
-        # Start bulk download in background thread
-        thread = threading.Thread(
-            target=run_bulk_download,
-            args=(job_id, filepath)
-        )
-        thread.daemon = True
-        thread.start()
-        print("Background thread started")
+        # Return mod information for direct download by frontend
+        mod_info = []
+        for link in mod_links:
+            try:
+                mod_slug = link.split('/')[-1]
+                mod_id = get_mod_id_from_slug(link)
+                
+                if mod_id:
+                    # Get latest version for the mod
+                    versions = get_mod_versions(mod_id, None, 1)  # Get all versions, Forge loader
+                    if versions:
+                        latest_version = versions[0]
+                        mod_info.append({
+                            'name': mod_slug,
+                            'download_url': latest_version.get('downloadUrl'),
+                            'file_name': latest_version.get('fileName'),
+                            'file_length': latest_version.get('fileLength', 0),
+                            'source_url': link,
+                            'success': True
+                        })
+                    else:
+                        mod_info.append({
+                            'name': mod_slug,
+                            'error': 'No versions available',
+                            'source_url': link,
+                            'success': False
+                        })
+                else:
+                    mod_info.append({
+                        'name': mod_slug,
+                        'error': 'Could not get mod ID',
+                        'source_url': link,
+                        'success': False
+                    })
+            except Exception as e:
+                print(f"Error processing mod {link}: {e}")
+                mod_info.append({
+                    'name': link.split('/')[-1],
+                    'error': str(e),
+                    'source_url': link,
+                    'success': False
+                })
         
-        return jsonify({'job_id': job_id, 'status': 'processing'})
+        return jsonify({
+            'total_mods': len(mod_links),
+            'mods': mod_info
+        })
         
     except Exception as e:
         print(f"Error in bulk download: {e}")
@@ -196,29 +223,39 @@ def download_direct():
         if not download_url or not file_name:
             return jsonify({'error': 'Download URL and file name are required'}), 400
         
+        print(f"Download request: {file_name} from {download_url}")
+        
         # Stream the file directly to the client
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
         
-        response = requests.get(download_url, headers=headers, stream=True, timeout=60)
-        
-        if response.status_code == 200:
-            def generate():
-                for chunk in response.iter_content(chunk_size=8192):
-                    yield chunk
+        try:
+            response = requests.get(download_url, headers=headers, stream=True, timeout=60)
+            print(f"Response status: {response.status_code}")
             
-            return Response(
-                generate(),
-                headers={
-                    'Content-Disposition': f'attachment; filename="{file_name}"',
-                    'Content-Type': 'application/octet-stream'
-                }
-            )
-        else:
-            return jsonify({'error': f'Failed to download file: HTTP {response.status_code}'}), 500
+            if response.status_code == 200:
+                def generate():
+                    for chunk in response.iter_content(chunk_size=8192):
+                        yield chunk
+                
+                return Response(
+                    generate(),
+                    headers={
+                        'Content-Disposition': f'attachment; filename="{file_name}"',
+                        'Content-Type': 'application/octet-stream'
+                    }
+                )
+            else:
+                print(f"Failed to download: HTTP {response.status_code}")
+                return jsonify({'error': f'Failed to download file: HTTP {response.status_code}'}), 500
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request error: {e}")
+            return jsonify({'error': f'Failed to download file: {str(e)}'}), 500
             
     except Exception as e:
+        print(f"Download endpoint error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
