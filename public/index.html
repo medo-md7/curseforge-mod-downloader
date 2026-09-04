@@ -517,19 +517,27 @@
                 }
 
                 if (data.versions && data.versions.length > 0) {
-                    versionList.innerHTML = data.versions.map((version, index) => `
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors ${index === 0 ? 'ring-2 ring-purple-500' : ''}" onclick="selectVersion(${version.id}, '${version.file_name.replace(/'/g, "\\'")}', '${version.download_url.replace(/'/g, "\\'")}', ${version.file_length}, this)">
+                    versionList.innerHTML = data.versions.map((version, index) => {
+                        const safeFileName = (version.file_name || 'unknown').replace(/'/g, "\\'");
+                        const safeDownloadUrl = (version.download_url || '').replace(/'/g, "\\'");
+                        const safeDisplayName = version.display_name || version.file_name || 'unknown';
+                        const safeFileLength = version.file_length || 0;
+                        const safeReleaseType = version.release_type || 'Unknown';
+                        const safeGameVersions = version.game_versions || [];
+                        
+                        return `
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors ${index === 0 ? 'ring-2 ring-purple-500' : ''}" onclick="selectVersion(${version.id}, '${safeFileName}', '${safeDownloadUrl}', ${safeFileLength}, this)">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">
-                                        <h4 class="font-semibold text-gray-800">${version.file_name}</h4>
-                                        <span class="px-2 py-1 text-xs rounded-full ${getReleaseTypeColor(version.release_type)}">${version.release_type}</span>
+                                        <h4 class="font-semibold text-gray-800">${safeFileName}</h4>
+                                        <span class="px-2 py-1 text-xs rounded-full ${getReleaseTypeColor(safeReleaseType)}">${safeReleaseType}</span>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">${version.display_name || version.file_name}</p>
+                                    <p class="text-sm text-gray-600 mt-1">${safeDisplayName}</p>
                                     <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                        <span>${formatFileSize(version.file_length)}</span>
+                                        <span>${formatFileSize(safeFileLength)}</span>
                                         <span>${new Date(version.file_date).toLocaleDateString()}</span>
-                                        <span>${version.game_versions.join(', ')}</span>
+                                        <span>${safeGameVersions.join(', ')}</span>
                                     </div>
                                 </div>
                                 <svg class="w-5 h-5 text-gray-400 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -537,7 +545,8 @@
                                 </svg>
                             </div>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
 
                     // Auto-select first version
                     if (data.versions.length > 0 && versionList.firstChild) {
