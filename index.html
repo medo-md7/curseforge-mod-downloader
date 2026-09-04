@@ -534,7 +534,7 @@
                     `).join('');
 
                     // Auto-select first version
-                    if (data.versions.length > 0) {
+                    if (data.versions.length > 0 && versionList.firstChild) {
                         selectVersion(data.versions[0].id, data.versions[0].file_name, data.versions[0].download_url, data.versions[0].file_length, versionList.firstChild);
                     }
                 } else {
@@ -551,12 +551,16 @@
             selectedVersion = { id: versionId, file_name: fileName, download_url: downloadUrl, file_length: fileLength };
 
             // Remove highlight from all versions
-            document.querySelectorAll('#version-list > div').forEach(el => {
-                el.classList.remove('ring-2', 'ring-purple-500');
-            });
+            if (document.querySelectorAll('#version-list > div')) {
+                document.querySelectorAll('#version-list > div').forEach(el => {
+                    el.classList.remove('ring-2', 'ring-purple-500');
+                });
+            }
 
             // Add highlight to selected version
-            element.classList.add('ring-2', 'ring-purple-500');
+            if (element && element.classList) {
+                element.classList.add('ring-2', 'ring-purple-500');
+            }
 
             document.getElementById('download-step').classList.remove('hidden');
         }
