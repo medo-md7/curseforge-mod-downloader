@@ -127,12 +127,9 @@
             <!-- Single Download Status -->
             <div id="single-status" class="mt-6 hidden">
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span id="single-status-text" class="text-gray-700 font-medium">Processing...</span>
-                        <span id="single-progress-text" class="text-sm text-gray-500">0%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div id="single-progress-bar" class="progress-bar bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                    <div class="flex items-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
+                        <span class="text-gray-700">Downloading...</span>
                     </div>
                 </div>
             </div>
@@ -223,14 +220,10 @@
             <!-- Bulk Download Status -->
             <div id="bulk-status" class="mt-6 hidden">
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span id="bulk-status-text" class="text-gray-700 font-medium">Processing...</span>
-                        <span id="bulk-progress-text" class="text-sm text-gray-500">0%</span>
+                    <div class="flex items-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
+                        <span class="text-gray-700">Processing...</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div id="bulk-progress-bar" class="progress-bar bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
-                    </div>
-                    <p id="bulk-progress-detail" class="text-sm text-gray-500 mt-2"></p>
                 </div>
             </div>
 
@@ -606,25 +599,8 @@
                 // Direct download from CurseForge CDN
                 await downloadFile(selectedVersion.download_url, selectedVersion.file_name);
                 
-                statusDiv.classList.add('hidden');
-                downloadBtn.disabled = false;
-                downloadBtn.textContent = 'Download Selected Version';
-                
                 // Show success message
-                resultDiv.innerHTML = `
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <div>
-                                <p class="font-medium text-green-800">Download initiated: ${selectedVersion.file_name}</p>
-                                <p class="text-sm text-green-600">Check your downloads folder</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                resultDiv.classList.remove('hidden');
+                showSingleResult();
                 
             } catch (error) {
                 console.error('Download error:', error);
@@ -651,31 +627,9 @@
             }
         }
 
-        async function pollSingleJob() {
-            try {
-                const response = await fetch(`${API_BASE}/jobs/${currentJobId}`);
-                const job = await response.json();
+        // Remove job polling functions since we use direct downloads now
 
-                const statusText = document.getElementById('single-status-text');
-                const progressText = document.getElementById('single-progress-text');
-                const progressBar = document.getElementById('single-progress-bar');
-
-                progressText.textContent = `${job.progress}%`;
-                progressBar.style.width = `${job.progress}%`;
-
-                if (job.status === 'completed') {
-                    clearInterval(pollInterval);
-                    showSingleResult(job.result);
-                } else if (job.status === 'failed') {
-                    clearInterval(pollInterval);
-                    showSingleError(job.error);
-                }
-            } catch (error) {
-                console.error('Error polling job:', error);
-            }
-        }
-
-        function showSingleResult(result) {
+        function showSingleResult() {
             const statusDiv = document.getElementById('single-status');
             const resultDiv = document.getElementById('single-result');
             const downloadBtn = document.getElementById('download-single-btn');
@@ -691,7 +645,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                         <div>
-                            <p class="font-medium text-green-800">Download initiated: ${selectedVersion.file_name}</p>
+                            <p class="font-medium text-green-800">Download initiated</p>
                             <p class="text-sm text-green-600">Check your downloads folder</p>
                         </div>
                     </div>
@@ -726,31 +680,6 @@
             document.getElementById('mod-name-input').value = '';
             selectedMod = null;
             selectedVersion = null;
-        }
-
-        function showSingleError(error) {
-            const statusDiv = document.getElementById('single-status');
-            const resultDiv = document.getElementById('single-result');
-            const downloadBtn = document.getElementById('download-single-btn');
-
-            statusDiv.classList.add('hidden');
-            downloadBtn.disabled = false;
-            downloadBtn.textContent = 'Download Selected Version';
-
-            resultDiv.innerHTML = `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <svg class="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        <div>
-                            <p class="font-medium text-red-800">Download failed</p>
-                            <p class="text-sm text-red-600">${error}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            resultDiv.classList.remove('hidden');
         }
 
         // File upload handling
