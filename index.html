@@ -1197,6 +1197,39 @@
                         </div>
                     </div>
                 `;
+            } else if (!uploadedManifest && !selectedModpack) {
+                // Show version selection UI when no manifest is provided
+                versionInfo = `
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77 1.333-2.694 2-4.732 2H7c-2.037 0-3.746-.946-4.732-2-.784-1.333-2.038-1.667-3.732-2l5.732-5.732H12v6h8"></path>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-yellow-800">No version specified</p>
+                                <p class="text-sm text-yellow-600">Please upload a manifest.json file or select a version below</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mb-4">
+                        <select id="bulk-version-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="">Select Minecraft Version</option>
+                            <option value="1.20.1">1.20.1</option>
+                            <option value="1.20">1.20</option>
+                            <option value="1.19.4">1.19.4</option>
+                            <option value="1.19.3">1.19.3</option>
+                            <option value="1.19.2">1.19.2</option>
+                            <option value="1.18.2">1.18.2</option>
+                            <option value="1.16.5">1.16.5</option>
+                            <option value="1.16.4">1.16.4</option>
+                            <option value="1.15.2">1.15.2</option>
+                            <option value="1.12.2">1.12.2</option>
+                        </select>
+                        <button onclick="confirmBulkDownloadWithVersion()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm hover:bg-yellow-700">
+                            Download with Selected Version
+                        </button>
+                    </div>
+                `;
             }
             
             resultDiv.innerHTML = `
@@ -1242,6 +1275,18 @@
                     </button>
                 </div>
             `;
+        }
+
+        async function confirmBulkDownloadWithVersion() {
+            const selectedVersion = document.getElementById('bulk-version-select').value;
+            if (!selectedVersion) {
+                alert('Please select a Minecraft version');
+                return;
+            }
+            
+            // Update the required version and retry
+            requiredVersion = selectedVersion;
+            await confirmBulkDownload();
         }
 
         function resetBulkDownload() {
