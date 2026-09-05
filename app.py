@@ -423,6 +423,35 @@ def search_mods():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/mod/<mod_id>/files', methods=['GET'])
+def get_mod_files(mod_id):
+    """Get files for a mod (used for modpack version detection)"""
+    try:
+        headers = {
+            "Accept": "application/json",
+            "x-api-key": CURSEFORGE_API_KEY
+        }
+        
+        files_url = f"{CURSEFORGE_API_BASE}/mods/{mod_id}/files"
+        params = {
+            "gameVersion": None,  # Get all versions
+            "pageSize": 1  # Just need the latest file
+        }
+        
+        response = requests.get(files_url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('data'):
+                return jsonify({'files': data['data']})
+        
+        return jsonify({'files': []})
+        
+    except Exception as e:
+        print(f"Error getting mod files: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/mod/<mod_id>/versions', methods=['GET'])
 def get_mod_versions_endpoint(mod_id):
     """Get available versions for a mod"""
