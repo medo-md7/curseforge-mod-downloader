@@ -99,7 +99,7 @@ def get_mod_id_from_slug(mod_url):
         return None
 
 
-def search_mod_by_name(mod_name):
+def search_mod_by_name(mod_name, content_type='mods'):
     """Search for a mod by name using the API."""
     try:
         headers = {
@@ -107,9 +107,20 @@ def search_mod_by_name(mod_name):
             "x-api-key": CURSEFORGE_API_KEY
         }
         
+        # Map content types to CurseForge class IDs
+        class_ids = {
+            'mods': 6,        # Minecraft Mods
+            'shaders': 5,     # Texture Packs (includes shaders)
+            'datapacks': 12,  # World Gen / Data Packs
+            'resourcepacks': 12  # Texture Packs (includes resource packs)
+        }
+        
+        class_id = class_ids.get(content_type, 6)  # Default to mods
+        
         search_url = f"{CURSEFORGE_API_BASE}/mods/search"
         params = {
             "gameId": 432,  # Minecraft game ID
+            "classId": class_id,
             "searchFilter": mod_name,
             "pageSize": 20,  # Increase page size to get more results
             "sortField": 2,  # Sort by relevance (2 = Popularity, might help with exact matches)

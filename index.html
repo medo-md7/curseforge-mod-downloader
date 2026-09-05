@@ -43,19 +43,28 @@
 
     <main class="container mx-auto px-4 py-8">
         <!-- Tab Navigation -->
-        <div class="flex space-x-4 mb-8">
-            <button id="tab-single" class="tab-btn px-6 py-3 rounded-lg font-semibold transition-all bg-white text-purple-600 shadow-md" onclick="switchTab('single')">
-                Single Mod Download
+        <div class="flex space-x-2 mb-8 overflow-x-auto">
+            <button id="tab-mods" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-white text-purple-600 shadow-md" onclick="switchTab('mods')">
+                Mods
             </button>
-            <button id="tab-bulk" class="tab-btn px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600" onclick="switchTab('bulk')">
+            <button id="tab-shaders" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600" onclick="switchTab('shaders')">
+                Shaders
+            </button>
+            <button id="tab-datapacks" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600" onclick="switchTab('datapacks')">
+                Data Packs
+            </button>
+            <button id="tab-resourcepacks" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600" onclick="switchTab('resourcepacks')">
+                Resource Packs
+            </button>
+            <button id="tab-bulk" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600" onclick="switchTab('bulk')">
                 Bulk Download
             </button>
         </div>
 
-        <!-- Single Mod Download Section -->
+        <!-- Single Content Download Section -->
         <div id="single-section" class="bg-white rounded-2xl card-shadow p-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Download Single Mod</h2>
-            <p class="text-gray-600 mb-6">Search for a mod and select the version you want to download</p>
+            <h2 id="section-title" class="text-2xl font-bold text-gray-800 mb-6">Download Single Mod</h2>
+            <p id="section-description" class="text-gray-600 mb-6">Search for a mod and select the version you want to download</p>
             
             <!-- Step 1: Search -->
             <div id="search-step" class="mb-6">
@@ -352,35 +361,79 @@
         let pollInterval = null;
         let selectedMod = null;
         let selectedVersion = null;
+        let currentContentType = 'mods'; // mods, shaders, datapacks, resourcepacks
 
         // Tab switching
         function switchTab(tab) {
             const singleSection = document.getElementById('single-section');
             const bulkSection = document.getElementById('bulk-section');
-            const tabSingle = document.getElementById('tab-single');
-            const tabBulk = document.getElementById('tab-bulk');
-
-            if (tab === 'single') {
-                singleSection.classList.remove('hidden');
-                bulkSection.classList.add('hidden');
-                tabSingle.classList.add('bg-white', 'text-purple-600', 'shadow-md');
-                tabSingle.classList.remove('bg-gray-200', 'text-gray-600');
-                tabBulk.classList.remove('bg-white', 'text-purple-600', 'shadow-md');
-                tabBulk.classList.add('bg-gray-200', 'text-gray-600');
-                
-                // Reset bulk download UI
-                resetBulkDownload();
-            } else {
-                singleSection.classList.add('hidden');
+            
+            // Hide all sections
+            singleSection.classList.add('hidden');
+            bulkSection.classList.add('hidden');
+            
+            // Reset all tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-purple-600', 'shadow-md');
+                btn.classList.add('bg-gray-200', 'text-gray-600');
+            });
+            
+            // Show selected section and highlight tab
+            if (tab === 'bulk') {
                 bulkSection.classList.remove('hidden');
-                tabBulk.classList.add('bg-white', 'text-purple-600', 'shadow-md');
-                tabBulk.classList.remove('bg-gray-200', 'text-gray-600');
-                tabSingle.classList.remove('bg-white', 'text-purple-600', 'shadow-md');
-                tabSingle.classList.add('bg-gray-200', 'text-gray-600');
+                document.getElementById('tab-bulk').classList.remove('bg-gray-200', 'text-gray-600');
+                document.getElementById('tab-bulk').classList.add('bg-white', 'text-purple-600', 'shadow-md');
+            } else {
+                singleSection.classList.remove('hidden');
+                currentContentType = tab;
                 
-                // Reset single download UI
-                resetSingleDownload();
+                // Update UI based on content type
+                updateContentTypeUI(tab);
+                
+                // Highlight the correct tab
+                const tabElement = document.getElementById(`tab-${tab}`);
+                if (tabElement) {
+                    tabElement.classList.remove('bg-gray-200', 'text-gray-600');
+                    tabElement.classList.add('bg-white', 'text-purple-600', 'shadow-md');
+                }
             }
+            
+            // Reset state
+            resetSingleDownload();
+        }
+
+        function updateContentTypeUI(contentType) {
+            const titleElement = document.getElementById('section-title');
+            const descriptionElement = document.getElementById('section-description');
+            const inputElement = document.getElementById('mod-name-input');
+            
+            const contentInfo = {
+                mods: {
+                    title: 'Download Single Mod',
+                    description: 'Search for a mod and select the version you want to download',
+                    placeholder: 'e.g., JEI, OptiFine, Tinkers Construct'
+                },
+                shaders: {
+                    title: 'Download Shader Pack',
+                    description: 'Search for shaders and select the version you want to download',
+                    placeholder: 'e.g., BSL, Sildur, SEUS'
+                },
+                datapacks: {
+                    title: 'Download Data Pack',
+                    description: 'Search for data packs and select the version you want to download',
+                    placeholder: 'e.g., Vanilla Tweaks, Xaero\'s World Map'
+                },
+                resourcepacks: {
+                    title: 'Download Resource Pack',
+                    description: 'Search for resource packs and select the version you want to download',
+                    placeholder: 'e.g., Faithful, John Smith Legacy'
+                }
+            };
+            
+            const info = contentInfo[contentType] || contentInfo.mods;
+            titleElement.textContent = info.title;
+            descriptionElement.textContent = info.description;
+            inputElement.placeholder = info.placeholder;
         }
 
         function resetBulkDownload() {
@@ -409,9 +462,9 @@
             try {
                 console.log('Searching for:', query);
                 console.log('API_BASE:', API_BASE);
-                console.log('Full URL:', `${API_BASE}/search/mods?q=${encodeURIComponent(query)}`);
+                console.log('Full URL:', `${API_BASE}/search/mods?q=${encodeURIComponent(query)}&type=${currentContentType}`);
                 
-                const response = await fetch(`${API_BASE}/search/mods?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`${API_BASE}/search/mods?q=${encodeURIComponent(query)}&type=${currentContentType}`);
                 
                 console.log('Response status:', response.status);
                 console.log('Response ok:', response.ok);
@@ -449,7 +502,7 @@
             } catch (error) {
                 console.error('Search error:', error);
                 resultsList.innerHTML = `<p class="text-red-500">Error searching for mods: ${error.message}. Please try again.</p>`;
-                resultsList.innerHTML += `<p class="text-xs text-gray-400 mt-2">API URL: ${API_BASE}/search/mods?q=${encodeURIComponent(query)}</p>`;
+                resultsList.innerHTML += `<p class="text-xs text-gray-400 mt-2">API URL: ${API_BASE}/search/mods?q=${encodeURIComponent(query)}&type=${currentContentType}</p>`;
             } finally {
                 searchBtn.disabled = false;
                 searchBtn.textContent = 'Search';

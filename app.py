@@ -264,11 +264,12 @@ def search_mods():
     """Search for mods by name"""
     try:
         query = request.args.get('q', '')
+        content_type = request.args.get('type', 'mods')  # mods, shaders, datapacks, resourcepacks
         if not query:
             return jsonify({'error': 'Search query is required'}), 400
         
-        print(f"Search query: {query}")
-        results = search_mod_by_name(query)
+        print(f"Search query: {query}, content type: {content_type}")
+        results = search_mod_by_name(query, content_type)
         print(f"Search results count: {len(results)}")
         
         # Format results for frontend
