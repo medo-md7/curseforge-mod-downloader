@@ -13,6 +13,8 @@ import uuid
 from datetime import datetime
 import json
 import requests
+import zipfile
+import io
 from curseforge_downloader_module import (
     get_mod_id_from_slug,
     get_mod_details,
@@ -418,6 +420,108 @@ def search_mods():
         
     except Exception as e:
         print(f"Search error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/modpack/<mod_id>/extract-manifest', methods=['GET'])
+def extract_modpack_manifest(mod_id):
+    """Download modpack and extract manifest.json automatically"""
+    try:
+        headers = {
+            "Accept": "application/json",
+            "x-api-key": CURSEFORGE_API_KEY
+        }
+        
+        # Get the latest modpack file
+        files_url = f"{CURSEFORGE_API_BASE}/mods/{mod_id}/files"
+        params = {
+            "pageSize": 1
+        }
+        
+        response = requests.get(files_url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code != 200:
+            return jsonify({'error': 'Could not get modpack files'}), 404
+        
+        data = response.json()
+        if not data.get('data'):
+            return jsonify({'error': 'No files found for modpack'}), 404
+        
+        latest_file = data['data'][0]
+        download_url = latest_file.get('downloadUrl')
+        
+        if not download_url:
+            return jsonify({'error': 'No download URL available'}), 400
+        
+        # Download the modpack file
+        print(f"Downloading modpack from: {download_url}")
+        file_response = requests.get(download_url, timeout=30)
+        
+        if file_response.status_code != 200:
+            return jsonify({'error': 'Failed to download modpack file'}), 500
+        
+        # Extract manifest.json from the zip file
+        try:
+            with zipfile.ZipFile(io.BytesIO(file_response.content)) as zip_ref:
+                # Look for manifest.json in common locations
+                manifest_paths = [
+                    'manifest.json',
+                    'overrides/manifest.json',
+                    'minecraft/manifest.json'
+                ]
+                
+                manifest_content = None
+                for path in manifest_paths:
+                    try:
+                        with zip_ref.open(path) as manifest_file:
+                            manifest_content = manifest_file.read().decode('utf-8')
+                            print(f"Found manifest at: {path}")
+                            break
+                    except KeyError:
+                        continue
+                
+                if not manifest_content:
+                    # Try to find any .json file that might be the manifest
+                    for file_info in zip_ref.filelist:
+                        if file_info.filename.endswith('manifest.json'):
+                            try:
+                                with zip_ref.open(file_info.filename) as manifest_file:
+                                    manifest_content = manifest_file.read().decode('utf-8')
+                                    print(f"Found manifest at: {file_info.filename}")
+                                    break
+                            except:
+                                continue
+                
+                if not manifest_content:
+                    return jsonify({'error': 'manifest.json not found in modpack'}), 404
+                
+                # Parse the manifest
+                manifest = json.loads(manifest_content)
+                
+                # Extract version and mod list
+                minecraft_version = manifest.get('minecraft', {}).get('version')
+                mod_files = manifest.get('files', [])
+                
+                return jsonify({
+                    'success': True,
+                    'manifest': manifest,
+                    'minecraft_version': minecraft_version,
+                    'mod_count': len(mod_files),
+                    'mod_list': mod_files
+                })
+                
+        except zipfile.BadZipFile:
+            return jsonify({'error': 'Downloaded file is not a valid zip file'}), 400
+        except json.JSONDecodeError:
+            return jsonify({'error': 'manifest.json is not valid JSON'}), 400
+        except Exception as e:
+            print(f"Error extracting manifest: {e}")
+            return jsonify({'error': f'Error extracting manifest: {str(e)}'}), 500
+            
+    except Exception as e:
+        print(f"Error in extract_modpack_manifest: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
