@@ -451,7 +451,7 @@
 
             try {
                 console.log('Searching for modpack:', query);
-                const response = await fetch(`${API_BASE}/search/mods?q=${encodeURIComponent(query)}&type=mods`);
+                const response = await fetch(`${API_BASE}/search/modpacks?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
 
                 if (data.results && data.results.length > 0) {

@@ -12,6 +12,7 @@ import threading
 import uuid
 from datetime import datetime
 import json
+import requests
 from curseforge_downloader_module import (
     get_mod_id_from_slug,
     get_mod_details,
@@ -21,7 +22,9 @@ from curseforge_downloader_module import (
     download_mod_by_name,
     process_bulk_download,
     search_mod_by_name,
-    download_specific_version
+    download_specific_version,
+    CURSEFORGE_API_BASE,
+    CURSEFORGE_API_KEY
 )
 
 # Add the parent directory to path to import the downloader module
@@ -320,6 +323,66 @@ def download_direct():
             
     except Exception as e:
         print(f"Download endpoint error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/search/modpacks', methods=['GET'])
+def search_modpacks():
+    """Search for modpacks by name"""
+    try:
+        query = request.args.get('q', '')
+        if not query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        print(f"Modpack search query: '{query}'")
+        
+        # Modpacks use a different class ID (4471 for Modpacks)
+        headers = {
+            "Accept": "application/json",
+            "x-api-key": CURSEFORGE_API_KEY
+        }
+        
+        search_url = f"{CURSEFORGE_API_BASE}/mods/search"
+        params = {
+            "gameId": 432,  # Minecraft game ID
+            "searchFilter": query,
+            "pageSize": 25,
+            "sortField": 1,  # Sort by featured
+            "sortOrder": "desc",
+            "classId": 4471  # Modpacks class ID
+        }
+        
+        response = requests.get(search_url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('data'):
+                results = data['data']
+                print(f"Modpack search results count: {len(results)}")
+                if results:
+                    print(f"First result: {results[0].get('name')}")
+                
+                # Format results for frontend
+                formatted_results = []
+                for mod in results:
+                    formatted_results.append({
+                        'id': mod.get('id'),
+                        'name': mod.get('name'),
+                        'slug': mod.get('slug'),
+                        'summary': mod.get('summary'),
+                        'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
+                        'download_count': mod.get('downloadCount'),
+                        'categories': [cat.get('name') for cat in mod.get('categories', [])]
+                    })
+                
+                return jsonify({'results': formatted_results})
+        
+        return jsonify({'results': []})
+        
+    except Exception as e:
+        print(f"Modpack search error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
