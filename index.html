@@ -151,22 +151,69 @@
 
         <!-- Bulk Download Section -->
         <div id="bulk-section" class="bg-white rounded-2xl card-shadow p-8 hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Bulk Download from modlist.html</h2>
-            <p class="text-gray-600 mb-6">Upload your modlist.html file to preview and download mods</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Bulk Download</h2>
+            <p class="text-gray-600 mb-6">Search for modpacks or upload files to download multiple mods</p>
             
-            <div 
-                id="upload-zone"
-                class="upload-zone rounded-xl p-12 text-center cursor-pointer"
-                onclick="document.getElementById('file-input').click()"
-            >
-                <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
-                <div class="text-gray-400 mb-4">
-                    <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
+            <!-- Modpack Search -->
+            <div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <h3 class="font-semibold text-purple-800 mb-4">Search for Modpack</h3>
+                <div class="flex gap-4">
+                    <input 
+                        type="text" 
+                        id="modpack-search-input" 
+                        placeholder="e.g., RLCraft, ATM9, Better Minecraft"
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        onkeypress="if(event.key === 'Enter') searchModpacks()"
+                    >
+                    <button 
+                        onclick="searchModpacks()"
+                        class="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                    >
+                        Search Modpacks
+                    </button>
                 </div>
-                <p class="text-gray-600 font-medium">Click to upload or drag and drop</p>
-                <p class="text-gray-400 text-sm mt-2">modlist.html file only</p>
+                <div id="modpack-search-results" class="hidden mt-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">Modpack Results</h4>
+                    <div id="modpack-results-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
+            </div>
+            
+            <!-- File Upload Section -->
+            <div class="mt-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Or Upload Files</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Modlist Upload -->
+                    <div 
+                        id="upload-zone"
+                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
+                        onclick="document.getElementById('file-input').click()"
+                    >
+                        <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600 font-medium">Upload modlist.html</p>
+                        <p class="text-gray-400 text-sm mt-1">CurseForge mod list file</p>
+                    </div>
+                    
+                    <!-- Manifest Upload -->
+                    <div 
+                        id="manifest-upload-zone"
+                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
+                        onclick="document.getElementById('manifest-input').click()"
+                    >
+                        <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600 font-medium">Upload manifest.json</p>
+                        <p class="text-gray-400 text-sm mt-1">For version specification</p>
+                    </div>
+                </div>
             </div>
 
             <!-- File Info -->
@@ -364,8 +411,165 @@
         let selectedMod = null;
         let selectedVersion = null;
         let currentContentType = 'mods'; // mods, shaders, datapacks, resourcepacks
+        let uploadedManifest = null;
+        let selectedModpack = null;
+        let requiredVersion = null;
 
         // Tab switching
+        async function searchModpacks() {
+            const query = document.getElementById('modpack-search-input').value.trim();
+            if (!query) {
+                alert('Please enter a modpack name to search');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('modpack-search-results');
+            const resultsList = document.getElementById('modpack-results-list');
+
+            resultsDiv.classList.remove('hidden');
+            resultsList.innerHTML = '<p class="text-gray-500">Searching for modpacks...</p>';
+
+            try {
+                console.log('Searching for modpack:', query);
+                const response = await fetch(`${API_BASE}/search/mods?q=${encodeURIComponent(query)}&type=mods`);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    resultsList.innerHTML = data.results.map(mod => `
+                        <div class="bg-white border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" onclick="selectModpack(${mod.id}, '${mod.name.replace(/'/g, "\\'")}', '${mod.slug.replace(/'/g, "\\'")}')">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">${mod.name}</h4>
+                                    <p class="text-sm text-gray-600">${mod.summary || 'No description available'}</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultsList.innerHTML = '<p class="text-gray-500">No modpacks found. Try a different search term.</p>';
+                }
+            } catch (error) {
+                console.error('Modpack search error:', error);
+                resultsList.innerHTML = '<p class="text-red-500">Error searching for modpacks. Please try again.</p>';
+            }
+        }
+
+        function selectModpack(modId, modName, modSlug) {
+            selectedModpack = { id: modId, name: modName, slug: modSlug };
+            document.getElementById('modpack-search-results').classList.add('hidden');
+            document.getElementById('modpack-search-input').value = modName;
+            
+            // Show modpack selected info
+            const uploadZone = document.getElementById('upload-zone');
+            uploadZone.innerHTML = `
+                <div class="text-green-600 mb-2">
+                    <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-800 font-medium">${modName}</p>
+                <p class="text-gray-500 text-sm">Modpack selected</p>
+                <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
+            `;
+            
+            // Try to get manifest from modpack
+            getModpackManifest(modId);
+        }
+
+        async function getModpackManifest(modId) {
+            try {
+                const response = await fetch(`${API_BASE}/modpack/${modId}/manifest`);
+                const data = await response.json();
+                
+                if (data.manifest) {
+                    uploadedManifest = data.manifest;
+                    requiredVersion = data.manifest.minecraft?.version;
+                    
+                    if (requiredVersion) {
+                        document.getElementById('manifest-upload-zone').innerHTML = `
+                            <div class="text-green-600 mb-2">
+                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <p class="text-gray-800 font-medium">Manifest found</p>
+                            <p class="text-gray-500 text-sm">Required version: ${requiredVersion}</p>
+                            <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.log('Could not get manifest from modpack:', error);
+            }
+        }
+
+        function clearModpackSelection() {
+            selectedModpack = null;
+            document.getElementById('modpack-search-input').value = '';
+            document.getElementById('modpack-search-results').classList.add('hidden');
+            
+            const uploadZone = document.getElementById('upload-zone');
+            uploadZone.innerHTML = `
+                <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
+                <div class="text-gray-400 mb-4">
+                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-600 font-medium">Upload modlist.html</p>
+                <p class="text-gray-400 text-sm mt-1">CurseForge mod list file</p>
+            `;
+        }
+
+        // Manifest upload handling
+        function handleManifestUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.json')) {
+                uploadedManifest = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const manifest = JSON.parse(e.target.result);
+                        requiredVersion = manifest.minecraft?.version;
+                        
+                        const manifestZone = document.getElementById('manifest-upload-zone');
+                        manifestZone.innerHTML = `
+                            <div class="text-green-600 mb-2">
+                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <p class="text-gray-800 font-medium">${file.name}</p>
+                            <p class="text-gray-500 text-sm">Required version: ${requiredVersion || 'Not specified'}</p>
+                            <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
+                        `;
+                    } catch (error) {
+                        alert('Invalid manifest file. Please upload a valid JSON file.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function clearManifest() {
+            uploadedManifest = null;
+            requiredVersion = null;
+            
+            const manifestZone = document.getElementById('manifest-upload-zone');
+            manifestZone.innerHTML = `
+                <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
+                <div class="text-gray-400 mb-4">
+                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-600 font-medium">Upload manifest.json</p>
+                <p class="text-gray-400 text-sm mt-1">For version specification</p>
+            `;
+        }
         function switchTab(tab) {
             const singleSection = document.getElementById('single-section');
             const bulkSection = document.getElementById('bulk-section');
