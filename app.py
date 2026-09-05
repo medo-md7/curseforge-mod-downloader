@@ -12,6 +12,17 @@ import threading
 import uuid
 from datetime import datetime
 import json
+from curseforge_downloader_module import (
+    get_mod_id_from_slug,
+    get_mod_details,
+    get_mod_versions,
+    parse_html_content,
+    parse_manifest_json,
+    download_mod_by_name,
+    process_bulk_download,
+    search_mod_by_name,
+    download_specific_version
+)
 
 # Add the parent directory to path to import the downloader module
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,17 +50,6 @@ DOWNLOAD_FOLDER.mkdir(exist_ok=True)
 
 # Store job status in memory (in production, use Redis or database)
 jobs = {}
-
-from curseforge_downloader_module import (
-    parse_html_content,
-    download_mod_by_name,
-    process_bulk_download,
-    search_mod_by_name,
-    get_mod_versions,
-    get_mod_details,
-    download_specific_version,
-    get_mod_id_from_slug
-)
 
 
 @app.route('/')
@@ -234,6 +234,39 @@ def get_modpack_manifest(mod_id):
             return jsonify({'error': 'Modpack not found'}), 404
     except Exception as e:
         print(f"Error getting modpack manifest: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/manifest/parse', methods=['POST'])
+def parse_manifest():
+    """Parse uploaded manifest.json file and extract mod information"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename.endswith('.json'):
+            return jsonify({'error': 'File must be a JSON file'}), 400
+        
+        manifest_content = file.read().decode('utf-8')
+        mod_info = parse_manifest_json(manifest_content)
+        
+        if mod_info:
+            return jsonify({
+                'success': True,
+                'minecraft_version': mod_info['minecraft_version'],
+                'modloader': mod_info['modloader'],
+                'mod_count': len(mod_info['mods']),
+                'mod_ids': [mod['project_id'] for mod in mod_info['mods']]
+            })
+        else:
+            return jsonify({'error': 'Failed to parse manifest'}), 400
+            
+    except Exception as e:
+        print(f"Error parsing manifest: {e}")
         return jsonify({'error': str(e)}), 500
 
 

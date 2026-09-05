@@ -53,6 +53,60 @@ def parse_html_file(html_path):
         return []
 
 
+def parse_manifest_json(manifest_content):
+    """Parse manifest.json content and extract mod information."""
+    try:
+        import json
+        manifest = json.loads(manifest_content)
+        
+        mod_info = {
+            'minecraft_version': None,
+            'modloader': None,
+            'mods': []
+        }
+        
+        # Extract Minecraft version
+        if 'minecraft' in manifest:
+            minecraft_data = manifest['minecraft']
+            if 'version' in minecraft_data:
+                mod_info['minecraft_version'] = minecraft_data['version']
+            
+            # Extract modloader information
+            if 'modLoaders' in minecraft_data and minecraft_data['modLoaders']:
+                mod_info['modloader'] = minecraft_data['modLoaders'][0].get('id', '').replace('forge-', '').replace('fabric-', '').replace('neoforge-', '').replace('quilt-', '')
+        
+        # Extract mod information
+        if 'files' in manifest:
+            for file_data in manifest['files']:
+                project_id = file_data.get('projectID')
+                file_id = file_data.get('fileID')
+                required = file_data.get('required', True)
+                
+                if project_id:
+                    mod_info['mods'].append({
+                        'project_id': project_id,
+                        'file_id': file_id,
+                        'required': required
+                    })
+        
+        return mod_info
+    except Exception as e:
+        print(f"Error parsing manifest.json: {e}")
+        return None
+
+
+def get_mod_ids_from_manifest(manifest_content):
+    """Extract mod project IDs from manifest.json content."""
+    try:
+        mod_info = parse_manifest_json(manifest_content)
+        if mod_info:
+            return [mod['project_id'] for mod in mod_info['mods']]
+        return []
+    except Exception as e:
+        print(f"Error extracting mod IDs from manifest: {e}")
+        return []
+
+
 def extract_mod_id(mod_url):
     """Extract mod ID from CurseForge URL by making a request and parsing the page."""
     try:
