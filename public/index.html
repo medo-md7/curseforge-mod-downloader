@@ -107,6 +107,8 @@
                     <select id="mod-loader-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                         <option value="1">Forge</option>
                         <option value="2">Fabric</option>
+                        <option value="3">NeoForge</option>
+                        <option value="4">Quilt</option>
                     </select>
                     <button 
                         onclick="getModVersions()"
@@ -412,27 +414,32 @@
             const titleElement = document.getElementById('section-title');
             const descriptionElement = document.getElementById('section-description');
             const inputElement = document.getElementById('mod-name-input');
+            const modLoaderSelect = document.getElementById('mod-loader-select');
             
             const contentInfo = {
                 mods: {
                     title: 'Download Single Mod',
                     description: 'Search for a mod and select the version you want to download',
-                    placeholder: 'e.g., JEI, OptiFine, Tinkers Construct'
+                    placeholder: 'e.g., JEI, OptiFine, Tinkers Construct',
+                    showModLoader: true
                 },
                 shaders: {
                     title: 'Download Shader Pack',
                     description: 'Search for shader packs (visual enhancements) and select the version you want to download',
-                    placeholder: 'e.g., BSL, Sildur, SEUS, Complementary'
+                    placeholder: 'e.g., BSL, Sildur, SEUS, Complementary',
+                    showModLoader: false
                 },
                 datapacks: {
                     title: 'Download Data Pack',
                     description: 'Search for data packs (gameplay modifications) and select the version you want to download',
-                    placeholder: 'e.g., Vanilla Tweaks, Xaero\'s, Better Combat'
+                    placeholder: 'e.g., Vanilla Tweaks, Xaero\'s, Better Combat',
+                    showModLoader: false
                 },
                 resourcepacks: {
                     title: 'Download Resource Pack',
                     description: 'Search for resource packs and select the version you want to download',
-                    placeholder: 'e.g., Faithful, John Smith Legacy'
+                    placeholder: 'e.g., Faithful, John Smith Legacy',
+                    showModLoader: false
                 }
             };
             
@@ -440,6 +447,13 @@
             titleElement.textContent = info.title;
             descriptionElement.textContent = info.description;
             inputElement.placeholder = info.placeholder;
+            
+            // Show/hide mod loader dropdown based on content type
+            if (info.showModLoader) {
+                modLoaderSelect.classList.remove('hidden');
+            } else {
+                modLoaderSelect.classList.add('hidden');
+            }
         }
 
         function resetBulkDownload() {
@@ -530,7 +544,8 @@
         // Single mod download - Step 3: Get versions
         async function getModVersions() {
             const gameVersion = document.getElementById('game-version-select').value;
-            const modLoaderType = document.getElementById('mod-loader-select').value;
+            const modLoaderSelect = document.getElementById('mod-loader-select');
+            const modLoaderType = modLoaderSelect.classList.contains('hidden') ? 1 : modLoaderSelect.value; // Default to Forge if hidden
             const versionResults = document.getElementById('version-results');
             const versionList = document.getElementById('version-list');
 
