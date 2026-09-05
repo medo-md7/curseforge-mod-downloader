@@ -130,6 +130,10 @@ def download_bulk_mods():
             print(f"Invalid file type: {file.filename}")
             return jsonify({'error': 'File must be an HTML file'}), 400
         
+        # Check for manifest version parameter
+        manifest_version = request.form.get('manifest_version') if request.form.get('manifest_version') else None
+        print(f"Manifest version: {manifest_version}")
+        
         # Read file content directly instead of saving
         html_content = file.read().decode('utf-8')
         print(f"HTML content length: {len(html_content)}")
@@ -151,7 +155,7 @@ def download_bulk_mods():
                 
                 if mod_id:
                     # Get latest version for the mod
-                    versions = get_mod_versions(mod_id, None, 1)  # Get all versions, Forge loader
+                    versions = get_mod_versions(mod_id, manifest_version, 1)  # Use manifest version if provided
                     if versions:
                         latest_version = versions[0]
                         mod_info.append({
@@ -187,7 +191,8 @@ def download_bulk_mods():
         
         return jsonify({
             'total_mods': len(mod_links),
-            'mods': mod_info
+            'mods': mod_info,
+            'required_version': manifest_version
         })
         
     except Exception as e:
@@ -204,6 +209,32 @@ def get_job_status(job_id):
         return jsonify({'error': 'Job not found'}), 404
     
     return jsonify(jobs[job_id])
+
+
+@app.route('/api/modpack/<mod_id>/manifest', methods=['GET'])
+def get_modpack_manifest(mod_id):
+    """Get manifest information for a modpack"""
+    try:
+        # Try to get mod details which might include manifest info
+        details = get_mod_details(mod_id)
+        if details:
+            # For now, return a basic manifest structure
+            # In the future, this could be enhanced to extract actual manifest from modpack files
+            return jsonify({
+                'manifest': {
+                    'minecraft': {
+                        'version': None,  # Would be extracted from actual manifest
+                        'modLoaders': []
+                    },
+                    'name': details.get('name'),
+                    'description': details.get('summary')
+                }
+            })
+        else:
+            return jsonify({'error': 'Modpack not found'}), 404
+    except Exception as e:
+        print(f"Error getting modpack manifest: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/jobs', methods=['GET'])
@@ -533,7 +564,7 @@ def run_bulk_download(job_id, html_filepath):
                 
                 if mod_id:
                     # Get latest version for the mod
-                    versions = get_mod_versions(mod_id, None, 1)  # Get all versions, Forge loader
+                    versions = get_mod_versions(mod_id, manifest_version, 1)  # Use manifest version if provided
                     if versions:
                         latest_version = versions[0]
                         mod_info.append({
