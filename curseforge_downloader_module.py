@@ -115,11 +115,11 @@ def search_mod_by_name(mod_name, content_type='mods'):
             },
             'shaders': {
                 'classId': 12,         # Texture Packs
-                'categoryFilter': None  # Shaders don't have a specific category
+                'categoryFilter': None  # Try specific shader category if available
             },
             'datapacks': {
                 'classId': 6,          # Data packs are under mods section
-                'categoryFilter': None  # Try without category filter first
+                'categoryFilter': None  # Try without class restriction first
             },
             'resourcepacks': {
                 'classId': 12,         # Texture Packs
@@ -132,47 +132,50 @@ def search_mod_by_name(mod_name, content_type='mods'):
         search_url = f"{CURSEFORGE_API_BASE}/mods/search"
         params = {
             "gameId": 432,  # Minecraft game ID
-            "classId": config['classId'],
             "searchFilter": mod_name,
             "pageSize": 20,  # Increase page size to get more results
             "sortField": 2,  # Sort by relevance (2 = Popularity, might help with exact matches)
             "sortOrder": "desc"
         }
         
-        # Add category filter if specified
-        if config['categoryFilter']:
-            params["categoryFilter"] = config['categoryFilter']
+        # Only add class filter for mods and resource packs
+        if content_type in ['mods', 'resourcepacks']:
+            params["classId"] = config['classId']
         
+        # For shaders and data packs, try to filter by categories in the results
         response = requests.get(search_url, headers=headers, params=params, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
             if data.get('data'):
-                # Try to prioritize exact matches
                 results = data['data']
+                
+                # Filter results based on content type using categories
+                if content_type == 'shaders':
+                    # Filter for shader-related categories
+                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting']
+                    filtered_results = [mod for mod in results if 
+                                        any(keyword in mod.get('name', '').lower() or 
+                                            any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
+                                            for keyword in shader_keywords)]
+                    if filtered_results:
+                        results = filtered_results
+                
+                elif content_type == 'datapacks':
+                    # Filter for data pack related categories
+                    datapack_keywords = ['data pack', 'datapack', 'world', 'utility', 'vanilla']
+                    filtered_results = [mod for mod in results if 
+                                        any(keyword in mod.get('name', '').lower() or 
+                                            any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
+                                            for keyword in datapack_keywords)]
+                    if filtered_results:
+                        results = filtered_results
+                
+                # Try to prioritize exact matches
                 exact_matches = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower()]
                 if exact_matches:
                     return exact_matches + [mod for mod in results if mod not in exact_matches]
                 return results
-        
-        # Fallback: try without class restriction if specific search didn't work
-        if content_type != 'mods':
-            params_fallback = {
-                "gameId": 432,
-                "searchFilter": mod_name,
-                "pageSize": 20,
-                "sortField": 2,
-                "sortOrder": "desc"
-            }
-            response_fallback = requests.get(search_url, headers=headers, params=params_fallback, timeout=10)
-            if response_fallback.status_code == 200:
-                data = response_fallback.json()
-                if data.get('data'):
-                    results = data['data']
-                    exact_matches = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower()]
-                    if exact_matches:
-                        return exact_matches + [mod for mod in results if mod not in exact_matches]
-                    return results
         
         return []
     except Exception as e:
