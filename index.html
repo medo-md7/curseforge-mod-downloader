@@ -415,7 +415,7 @@
         let selectedModpack = null;
         let requiredVersion = null;
 
-        // Tab switching
+        // Modpack search
         async function searchModpacks() {
             const query = document.getElementById('modpack-search-input').value.trim();
             if (!query) {
@@ -570,6 +570,8 @@
                 <p class="text-gray-400 text-sm mt-1">For version specification</p>
             `;
         }
+
+        // Tab switching
         function switchTab(tab) {
             const singleSection = document.getElementById('single-section');
             const bulkSection = document.getElementById('bulk-section');
