@@ -500,16 +500,22 @@
 
         async function getModpackManifest(modId) {
             try {
-                // First try to get modpack files to find version
+                // First try to get modpack files to find version and download URL
                 const filesResponse = await fetch(`${API_BASE}/mod/${modId}/files`);
                 const filesData = await filesResponse.json();
                 
                 let versionInfo = null;
+                let downloadUrl = null;
+                let fileName = null;
                 
                 if (filesData.files && filesData.files.length > 0) {
                     // Get the latest file
                     const latestFile = filesData.files[0];
                     const gameVersions = latestFile.gameVersions || [];
+                    
+                    // Store download URL
+                    downloadUrl = latestFile.downloadUrl;
+                    fileName = latestFile.fileName;
                     
                     // Filter for Minecraft versions (not mod loaders)
                     const minecraftVersions = gameVersions.filter(v => 
@@ -523,7 +529,11 @@
                     }
                 }
                 
-                // Show version information
+                // Store download info in selectedModpack
+                selectedModpack.downloadUrl = downloadUrl;
+                selectedModpack.fileName = fileName;
+                
+                // Show version information with download button
                 const uploadZone = document.getElementById('upload-zone');
                 if (versionInfo) {
                     requiredVersion = versionInfo;
@@ -539,6 +549,11 @@
                             <p class="text-blue-800 font-semibold text-sm">Required Version: ${versionInfo}</p>
                             <p class="text-blue-600 text-xs mt-1">Mods will be downloaded for this version</p>
                         </div>
+                        ${downloadUrl ? `
+                            <a href="${downloadUrl}" download="${fileName}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                                Download Modpack File
+                            </a>
+                        ` : ''}
                         <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
                     `;
                 } else {
@@ -554,6 +569,11 @@
                             <p class="text-yellow-800 font-semibold text-sm">Version info not available</p>
                             <p class="text-yellow-600 text-xs mt-1">Please select a version manually or upload a manifest.json</p>
                         </div>
+                        ${downloadUrl ? `
+                            <a href="${downloadUrl}" download="${fileName}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                                Download Modpack File
+                            </a>
+                        ` : ''}
                         <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
                     `;
                 }
@@ -594,6 +614,11 @@
                         <p class="text-yellow-800 font-semibold text-sm">Version info not available</p>
                         <p class="text-yellow-600 text-xs mt-1">Please select a version manually or upload a manifest.json</p>
                     </div>
+                    ${selectedModpack.downloadUrl ? `
+                        <a href="${selectedModpack.downloadUrl}" download="${selectedModpack.fileName}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                            Download Modpack File
+                        </a>
+                    ` : ''}
                     <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
                 `;
             }
@@ -601,6 +626,7 @@
 
         function clearModpackSelection() {
             selectedModpack = null;
+            requiredVersion = null;
             document.getElementById('modpack-search-input').value = '';
             document.getElementById('modpack-search-results').classList.add('hidden');
             
