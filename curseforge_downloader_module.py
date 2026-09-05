@@ -107,25 +107,41 @@ def search_mod_by_name(mod_name, content_type='mods'):
             "x-api-key": CURSEFORGE_API_KEY
         }
         
-        # Map content types to CurseForge class IDs
-        class_ids = {
-            'mods': 6,           # Minecraft Mods
-            'shaders': 12,       # Texture Packs (includes shaders)
-            'datapacks': 6,      # Data packs are often under mods
-            'resourcepacks': 12  # Texture Packs
+        # Map content types to CurseForge class IDs and category filters
+        content_config = {
+            'mods': {
+                'classId': 6,           # Minecraft Mods
+                'categoryFilter': None
+            },
+            'shaders': {
+                'classId': 12,         # Texture Packs
+                'categoryFilter': None  # Shaders don't have a specific category
+            },
+            'datapacks': {
+                'classId': 6,          # Data packs are under mods section
+                'categoryFilter': None  # Try without category filter first
+            },
+            'resourcepacks': {
+                'classId': 12,         # Texture Packs
+                'categoryFilter': None
+            }
         }
         
-        class_id = class_ids.get(content_type, 6)  # Default to mods
+        config = content_config.get(content_type, content_config['mods'])
         
         search_url = f"{CURSEFORGE_API_BASE}/mods/search"
         params = {
             "gameId": 432,  # Minecraft game ID
-            "classId": class_id,
+            "classId": config['classId'],
             "searchFilter": mod_name,
             "pageSize": 20,  # Increase page size to get more results
             "sortField": 2,  # Sort by relevance (2 = Popularity, might help with exact matches)
             "sortOrder": "desc"
         }
+        
+        # Add category filter if specified
+        if config['categoryFilter']:
+            params["categoryFilter"] = config['categoryFilter']
         
         response = requests.get(search_url, headers=headers, params=params, timeout=10)
         
@@ -138,6 +154,25 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 if exact_matches:
                     return exact_matches + [mod for mod in results if mod not in exact_matches]
                 return results
+        
+        # Fallback: try without class restriction if specific search didn't work
+        if content_type != 'mods':
+            params_fallback = {
+                "gameId": 432,
+                "searchFilter": mod_name,
+                "pageSize": 20,
+                "sortField": 2,
+                "sortOrder": "desc"
+            }
+            response_fallback = requests.get(search_url, headers=headers, params=params_fallback, timeout=10)
+            if response_fallback.status_code == 200:
+                data = response_fallback.json()
+                if data.get('data'):
+                    results = data['data']
+                    exact_matches = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower()]
+                    if exact_matches:
+                        return exact_matches + [mod for mod in results if mod not in exact_matches]
+                    return results
         
         return []
     except Exception as e:
@@ -167,7 +202,7 @@ def get_mod_versions(mod_id, game_version=None, mod_loader_type=1):
         if response.status_code == 200:
             data = response.json()
             files = data.get('data', [])
-            # Sort by release date (newest first)
+            # Sort by release date (newest first) for better version display
             files.sort(key=lambda x: x.get('fileDate', ''), reverse=True)
             return files
         
