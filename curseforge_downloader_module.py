@@ -168,12 +168,12 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 'categoryFilter': None
             },
             'shaders': {
-                'classId': 12,         # Texture Packs
-                'categoryFilter': None  # Try specific shader category if available
+                'classId': 12,         # Texture Packs (shaders are often here)
+                'categoryFilter': None
             },
             'datapacks': {
                 'classId': 6,          # Data packs are under mods section
-                'categoryFilter': None  # Try without class restriction first
+                'categoryFilter': None
             },
             'resourcepacks': {
                 'classId': 12,         # Texture Packs
@@ -187,16 +187,15 @@ def search_mod_by_name(mod_name, content_type='mods'):
         params = {
             "gameId": 432,  # Minecraft game ID
             "searchFilter": mod_name,
-            "pageSize": 20,  # Increase page size to get more results
-            "sortField": 2,  # Sort by relevance (2 = Popularity, might help with exact matches)
+            "pageSize": 25,  # Increase page size to get more results
+            "sortField": 1,  # Sort by relevance (1 = Featured, 2 = Popularity)
             "sortOrder": "desc"
         }
         
-        # Only add class filter for mods and resource packs
-        if content_type in ['mods', 'resourcepacks']:
+        # Add class filter for content types that have specific class IDs
+        if content_type in ['mods', 'resourcepacks', 'shaders']:
             params["classId"] = config['classId']
         
-        # For shaders and data packs, try to filter by categories in the results
         response = requests.get(search_url, headers=headers, params=params, timeout=10)
         
         if response.status_code == 200:
@@ -207,7 +206,7 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 # Filter results based on content type using categories
                 if content_type == 'shaders':
                     # Filter for shader-related categories
-                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting']
+                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting', 'iris', 'optifine']
                     filtered_results = [mod for mod in results if 
                                         any(keyword in mod.get('name', '').lower() or 
                                             any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
@@ -217,7 +216,7 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 
                 elif content_type == 'datapacks':
                     # Filter for data pack related categories
-                    datapack_keywords = ['data pack', 'datapack', 'world', 'utility', 'vanilla']
+                    datapack_keywords = ['data pack', 'datapack', 'world', 'utility', 'vanilla', 'function']
                     filtered_results = [mod for mod in results if 
                                         any(keyword in mod.get('name', '').lower() or 
                                             any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
@@ -225,11 +224,30 @@ def search_mod_by_name(mod_name, content_type='mods'):
                     if filtered_results:
                         results = filtered_results
                 
-                # Try to prioritize exact matches
-                exact_matches = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower()]
-                if exact_matches:
-                    return exact_matches + [mod for mod in results if mod not in exact_matches]
-                return results
+                elif content_type == 'resourcepacks':
+                    # Filter for resource pack categories, exclude shaders
+                    shader_keywords = ['shader', 'shaders', 'iris', 'optifine']
+                    filtered_results = [mod for mod in results if 
+                                        not any(keyword in mod.get('name', '').lower() or 
+                                               any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
+                                               for keyword in shader_keywords)]
+                    if filtered_results:
+                        results = filtered_results
+                
+                # Improved exact match prioritization
+                # 1. Exact name match (case-insensitive)
+                exact_name_matches = [mod for mod in results if mod.get('name', '').lower() == mod_name.lower()]
+                # 2. Name contains search term
+                name_contains = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower() and mod not in exact_name_matches]
+                # 3. Slug contains search term
+                slug_contains = [mod for mod in results if mod_name.lower() in mod.get('slug', '').lower() and mod not in exact_name_matches and mod not in name_contains]
+                # 4. Remaining results
+                other_results = [mod for mod in results if mod not in exact_name_matches and mod not in name_contains and mod not in slug_contains]
+                
+                # Combine in priority order
+                prioritized_results = exact_name_matches + name_contains + slug_contains + other_results
+                
+                return prioritized_results
         
         return []
     except Exception as e:

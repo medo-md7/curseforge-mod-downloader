@@ -332,9 +332,11 @@ def search_mods():
         if not query:
             return jsonify({'error': 'Search query is required'}), 400
         
-        print(f"Search query: {query}, content type: {content_type}")
+        print(f"Search query: '{query}', content type: '{content_type}'")
         results = search_mod_by_name(query, content_type)
         print(f"Search results count: {len(results)}")
+        if results:
+            print(f"First result: {results[0].get('name')}")
         
         # Format results for frontend
         formatted_results = []
@@ -352,6 +354,9 @@ def search_mods():
         return jsonify({'results': formatted_results})
         
     except Exception as e:
+        print(f"Search error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
