@@ -109,10 +109,10 @@ def search_mod_by_name(mod_name, content_type='mods'):
         
         # Map content types to CurseForge class IDs
         class_ids = {
-            'mods': 6,        # Minecraft Mods
-            'shaders': 5,     # Texture Packs (includes shaders)
-            'datapacks': 12,  # World Gen / Data Packs
-            'resourcepacks': 12  # Texture Packs (includes resource packs)
+            'mods': 6,           # Minecraft Mods
+            'shaders': 12,       # Texture Packs (includes shaders)
+            'datapacks': 6,      # Data packs are often under mods
+            'resourcepacks': 12  # Texture Packs
         }
         
         class_id = class_ids.get(content_type, 6)  # Default to mods
