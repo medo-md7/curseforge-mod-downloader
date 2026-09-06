@@ -466,7 +466,10 @@
                         </div>
                     `).join('');
                 } else {
-                    resultsList.innerHTML = '<p class="text-gray-500">No modpacks found. Try a different search term.</p>';
+                    resultsList.innerHTML = `
+                        <p class="text-gray-500">No modpacks found. Try a different search term.</p>
+                        <p class="text-sm text-gray-400 mt-2">Tips: Try the full name (e.g., "All The Mods 10" instead of "atm10")</p>
+                    `;
                 }
             } catch (error) {
                 console.error('Modpack search error:', error);
