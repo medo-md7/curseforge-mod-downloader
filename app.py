@@ -384,6 +384,44 @@ def search_modpacks():
                 return jsonify({'results': formatted_results})
             else:
                 print("No data in response")
+                # Try without class ID as fallback
+                print("Trying fallback search without class ID")
+                params_fallback = {
+                    "gameId": 432,
+                    "searchFilter": query,
+                    "pageSize": 25,
+                    "sortField": 1,
+                    "sortOrder": "desc"
+                }
+                response_fallback = requests.get(search_url, headers=headers, params=params_fallback, timeout=15)
+                
+                if response_fallback.status_code == 200:
+                    data_fallback = response_fallback.json()
+                    if data_fallback.get('data'):
+                        results_fallback = data_fallback['data']
+                        print(f"Fallback search results count: {len(results_fallback)}")
+                        
+                        # Filter for modpacks manually
+                        modpack_results = []
+                        for mod in results_fallback:
+                            categories = mod.get('categories', [])
+                            # Check if it's likely a modpack by categories
+                            is_modpack = any(cat.get('name', '').lower() in ['modpack', 'adventure', 'quest', 'map'] 
+                                           for cat in categories)
+                            if is_modpack:
+                                modpack_results.append({
+                                    'id': mod.get('id'),
+                                    'name': mod.get('name'),
+                                    'slug': mod.get('slug'),
+                                    'summary': mod.get('summary'),
+                                    'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
+                                    'download_count': mod.get('downloadCount'),
+                                    'categories': [cat.get('name') for cat in categories]
+                                })
+                        
+                        if modpack_results:
+                            print(f"Found {len(modpack_results)} modpacks via fallback")
+                            return jsonify({'results': modpack_results})
         else:
             print(f"Non-200 response: {response.text}")
         
