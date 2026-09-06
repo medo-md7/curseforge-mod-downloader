@@ -203,7 +203,7 @@
                     <div 
                         id="upload-zone"
                         class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
-                        onclick="const input = document.getElementById('file-input'); if(input) input.click();"
+                        onclick="triggerFileInput()"
                     >
                         <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
                         <div class="text-gray-400 mb-4">
@@ -219,7 +219,7 @@
                     <div 
                         id="manifest-upload-zone"
                         class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
-                        onclick="const input = document.getElementById('manifest-input'); if(input) input.click();"
+                        onclick="triggerManifestInput()"
                     >
                         <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
                         <div class="text-gray-400 mb-4">
@@ -917,7 +917,20 @@
                     <p class="text-gray-600 font-medium">Upload manifest.json</p>
                     <p class="text-gray-400 text-sm mt-1">For version specification</p>
                 `;
+                // Re-attach the onclick handler
+                manifestZone.onclick = triggerManifestInput;
             }
+        }
+
+        // Helper functions for file input triggers
+        function triggerFileInput() {
+            const input = document.getElementById('file-input');
+            if (input) input.click();
+        }
+
+        function triggerManifestInput() {
+            const input = document.getElementById('manifest-input');
+            if (input) input.click();
         }
 
         // Tab switching
@@ -1006,8 +1019,12 @@
         }
 
         function resetBulkDownload() {
-            document.getElementById('file-preview').classList.add('hidden');
-            document.getElementById('bulk-status').classList.add('hidden');
+            const filePreview = document.getElementById('file-preview');
+            if (filePreview) filePreview.classList.add('hidden');
+            
+            const bulkStatus = document.getElementById('bulk-status');
+            if (bulkStatus) bulkStatus.classList.add('hidden');
+            
             clearFile();
         }
 
@@ -1339,10 +1356,21 @@
 
         function clearFile() {
             uploadedFile = null;
-            document.getElementById('file-input').value = '';
-            document.getElementById('file-info').classList.add('hidden');
-            document.getElementById('preview-btn').disabled = true;
-            document.getElementById('file-preview').classList.add('hidden');
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) fileInput.value = '';
+            
+            const fileInfo = document.getElementById('file-info');
+            if (fileInfo) fileInfo.classList.add('hidden');
+            
+            const previewBtn = document.getElementById('preview-btn');
+            if (previewBtn) previewBtn.disabled = true;
+            
+            const filePreview = document.getElementById('file-preview');
+            if (filePreview) filePreview.classList.add('hidden');
+            
+            // Re-attach the onclick handler to upload zone
+            const uploadZone = document.getElementById('upload-zone');
+            if (uploadZone) uploadZone.onclick = triggerFileInput;
         }
 
         // Preview HTML file contents
@@ -1641,11 +1669,19 @@
         }
 
         function resetBulkDownload() {
-            document.getElementById('bulk-result').classList.add('hidden');
-            document.getElementById('bulk-status').classList.add('hidden');
-            document.getElementById('file-preview').classList.remove('hidden');
+            const bulkResult = document.getElementById('bulk-result');
+            if (bulkResult) bulkResult.classList.add('hidden');
+            
+            const bulkStatus = document.getElementById('bulk-status');
+            if (bulkStatus) bulkStatus.classList.add('hidden');
+            
+            const filePreview = document.getElementById('file-preview');
+            if (filePreview) filePreview.classList.remove('hidden');
+            
             uploadedFile = null;
-            document.getElementById('file-info').classList.add('hidden');
+            
+            const fileInfo = document.getElementById('file-info');
+            if (fileInfo) fileInfo.classList.add('hidden');
         }
 
         async function pollBulkJob() {
