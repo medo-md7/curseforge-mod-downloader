@@ -688,40 +688,81 @@
                     const fileId = modFile.fileID;
                     
                     try {
-                        // Get mod details
-                        const modResponse = await fetch(`${API_BASE}/mod/${projectId}`);
-                        const modData = await modResponse.json();
+                        // Get mod details using the correct endpoint
+                        const modResponse = await fetch(`${API_BASE}/mod/${projectId}/details`);
                         
-                        if (modData.success) {
-                            const mod = modData.mod;
-                            
-                            // Get specific file version
-                            const fileResponse = await fetch(`${API_BASE}/mod/${projectId}/files?fileId=${fileId}`);
-                            const fileData = await fileResponse.json();
-                            
-                            if (fileData.files && fileData.files.length > 0) {
-                                const file = fileData.files[0];
-                                modInfo.push({
-                                    name: mod.name,
-                                    download_url: file.downloadUrl,
-                                    file_name: file.fileName,
-                                    file_length: file.fileLength,
-                                    source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug}`,
-                                    success: true
-                                });
-                            } else {
-                                modInfo.push({
-                                    name: `Project ID: ${projectId}`,
-                                    error: 'File not found',
-                                    source_url: '',
-                                    success: false
-                                });
-                            }
-                        } else {
+                        if (!modResponse.ok) {
                             modInfo.push({
                                 name: `Project ID: ${projectId}`,
-                                error: 'Mod not found',
-                                source_url: '',
+                                error: `Mod not found (HTTP ${modResponse.status})`,
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${projectId}`,
+                                success: false
+                            });
+                            continue;
+                        }
+                        
+                        const modData = await modResponse.json();
+                        
+                        if (modData.error) {
+                            modInfo.push({
+                                name: `Project ID: ${projectId}`,
+                                error: modData.error,
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${projectId}`,
+                                success: false
+                            });
+                            continue;
+                        }
+                        
+                        const mod = modData;
+                        
+                        // Get specific file version
+                        const fileResponse = await fetch(`${API_BASE}/mod/${projectId}/files`);
+                        
+                        if (!fileResponse.ok) {
+                            modInfo.push({
+                                name: mod.name || `Project ID: ${projectId}`,
+                                error: `File not found (HTTP ${fileResponse.status})`,
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug || projectId}`,
+                                success: false
+                            });
+                            continue;
+                        }
+                        
+                        const fileData = await fileResponse.json();
+                        
+                        if (fileData.error) {
+                            modInfo.push({
+                                name: mod.name || `Project ID: ${projectId}`,
+                                error: fileData.error,
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug || projectId}`,
+                                success: false
+                            });
+                            continue;
+                        }
+                        
+                        if (fileData.files && fileData.files.length > 0) {
+                            // Try to find the specific file ID if provided
+                            let file = fileData.files[0];
+                            if (fileId) {
+                                const specificFile = fileData.files.find(f => f.id === fileId);
+                                if (specificFile) {
+                                    file = specificFile;
+                                }
+                            }
+                            
+                            modInfo.push({
+                                name: mod.name,
+                                download_url: file.downloadUrl,
+                                file_name: file.fileName,
+                                file_length: file.fileLength,
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug}`,
+                                success: true
+                            });
+                        } else {
+                            modInfo.push({
+                                name: mod.name || `Project ID: ${projectId}`,
+                                error: 'No files available',
+                                source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug || projectId}`,
                                 success: false
                             });
                         }
@@ -791,6 +832,7 @@
                                 ${failedMods.map(mod => `
                                     <div class="bg-red-50 border border-red-200 rounded p-3">
                                         <p class="text-red-800">${mod.name}: ${mod.error}</p>
+                                        ${mod.source_url ? `<a href="${mod.source_url}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800">View on CurseForge</a>` : ''}
                                     </div>
                                 `).join('')}
                             </div>
