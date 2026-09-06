@@ -203,7 +203,7 @@
                     <div 
                         id="upload-zone"
                         class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
-                        onclick="document.getElementById('file-input').click()"
+                        onclick="const input = document.getElementById('file-input'); if(input) input.click();"
                     >
                         <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
                         <div class="text-gray-400 mb-4">
@@ -219,7 +219,7 @@
                     <div 
                         id="manifest-upload-zone"
                         class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
-                        onclick="document.getElementById('manifest-input').click()"
+                        onclick="const input = document.getElementById('manifest-input'); if(input) input.click();"
                     >
                         <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
                         <div class="text-gray-400 mb-4">
@@ -537,16 +537,19 @@
                     `;
                     
                     // Update manifest upload zone to show it was extracted
-                    document.getElementById('manifest-upload-zone').innerHTML = `
-                        <div class="text-green-600 mb-2">
-                            <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </div>
-                        <p class="text-gray-800 font-medium">Manifest extracted</p>
-                        <p class="text-gray-500 text-sm">Required version: ${requiredVersion}</p>
-                        <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
-                    `;
+                    const manifestUploadZone = document.getElementById('manifest-upload-zone');
+                    if (manifestUploadZone) {
+                        manifestUploadZone.innerHTML = `
+                            <div class="text-green-600 mb-2">
+                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <p class="text-gray-800 font-medium">Manifest extracted</p>
+                            <p class="text-gray-500 text-sm">Required version: ${requiredVersion}</p>
+                            <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
+                        `;
+                    }
                     
                 } else {
                     // Fallback: try to get basic version info without downloading full modpack
@@ -878,16 +881,18 @@
                         requiredVersion = manifest.minecraft?.version;
                         
                         const manifestZone = document.getElementById('manifest-upload-zone');
-                        manifestZone.innerHTML = `
-                            <div class="text-green-600 mb-2">
-                                <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                            </div>
-                            <p class="text-gray-800 font-medium">${file.name}</p>
-                            <p class="text-gray-500 text-sm">Required version: ${requiredVersion || 'Not specified'}</p>
-                            <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
-                        `;
+                        if (manifestZone) {
+                            manifestZone.innerHTML = `
+                                <div class="text-green-600 mb-2">
+                                    <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-800 font-medium">${file.name}</p>
+                                <p class="text-gray-500 text-sm">Required version: ${requiredVersion || 'Not specified'}</p>
+                                <button onclick="clearManifest()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear manifest</button>
+                            `;
+                        }
                     } catch (error) {
                         alert('Invalid manifest file. Please upload a valid JSON file.');
                     }
@@ -901,16 +906,18 @@
             requiredVersion = null;
             
             const manifestZone = document.getElementById('manifest-upload-zone');
-            manifestZone.innerHTML = `
-                <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
-                <div class="text-gray-400 mb-4">
-                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                </div>
-                <p class="text-gray-600 font-medium">Upload manifest.json</p>
-                <p class="text-gray-400 text-sm mt-1">For version specification</p>
-            `;
+            if (manifestZone) {
+                manifestZone.innerHTML = `
+                    <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
+                    <div class="text-gray-400 mb-4">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 font-medium">Upload manifest.json</p>
+                    <p class="text-gray-400 text-sm mt-1">For version specification</p>
+                `;
+            }
         }
 
         // Tab switching
