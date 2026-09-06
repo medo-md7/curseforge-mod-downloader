@@ -355,7 +355,10 @@ def search_modpacks():
             "classId": 4471  # Modpacks class ID
         }
         
-        response = requests.get(search_url, headers=headers, params=params, timeout=10)
+        print(f"Calling CurseForge API with params: {params}")
+        response = requests.get(search_url, headers=headers, params=params, timeout=15)
+        
+        print(f"CurseForge API response status: {response.status_code}")
         
         if response.status_code == 200:
             data = response.json()
@@ -379,6 +382,10 @@ def search_modpacks():
                     })
                 
                 return jsonify({'results': formatted_results})
+            else:
+                print("No data in response")
+        else:
+            print(f"Non-200 response: {response.text}")
         
         return jsonify({'results': []})
         
