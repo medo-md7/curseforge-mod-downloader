@@ -440,30 +440,36 @@ def extract_modpack_manifest(mod_id):
             "pageSize": 1
         }
         
-        response = requests.get(files_url, headers=headers, params=params, timeout=10)
+        print(f"Fetching modpack files for ID: {mod_id}")
+        response = requests.get(files_url, headers=headers, params=params, timeout=15)
         
         if response.status_code != 200:
+            print(f"Failed to get modpack files: {response.status_code}")
             return jsonify({'error': 'Could not get modpack files'}), 404
         
         data = response.json()
         if not data.get('data'):
+            print("No files found in response")
             return jsonify({'error': 'No files found for modpack'}), 404
         
         latest_file = data['data'][0]
         download_url = latest_file.get('downloadUrl')
         
         if not download_url:
+            print("No download URL available")
             return jsonify({'error': 'No download URL available'}), 400
         
         # Download the modpack file
         print(f"Downloading modpack from: {download_url}")
-        file_response = requests.get(download_url, timeout=30)
+        file_response = requests.get(download_url, timeout=60)
         
         if file_response.status_code != 200:
+            print(f"Failed to download modpack file: {file_response.status_code}")
             return jsonify({'error': 'Failed to download modpack file'}), 500
         
         # Extract manifest.json from the zip file
         try:
+            print(f"Extracting manifest from zip file ({len(file_response.content)} bytes)")
             with zipfile.ZipFile(io.BytesIO(file_response.content)) as zip_ref:
                 # Look for manifest.json in common locations
                 manifest_paths = [
@@ -495,10 +501,12 @@ def extract_modpack_manifest(mod_id):
                                 continue
                 
                 if not manifest_content:
+                    print("manifest.json not found in modpack")
                     return jsonify({'error': 'manifest.json not found in modpack'}), 404
                 
                 # Parse the manifest
                 manifest = json.loads(manifest_content)
+                print(f"Manifest parsed successfully, found {len(manifest.get('files', []))} files")
                 
                 # Extract version and mod list
                 minecraft_version = manifest.get('minecraft', {}).get('version')
@@ -513,8 +521,10 @@ def extract_modpack_manifest(mod_id):
                 })
                 
         except zipfile.BadZipFile:
+            print("Downloaded file is not a valid zip file")
             return jsonify({'error': 'Downloaded file is not a valid zip file'}), 400
         except json.JSONDecodeError:
+            print("manifest.json is not valid JSON")
             return jsonify({'error': 'manifest.json is not valid JSON'}), 400
         except Exception as e:
             print(f"Error extracting manifest: {e}")
