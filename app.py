@@ -39,7 +39,8 @@ CORS(app, resources={
         "origins": [
             "http://localhost:5000",
             "http://127.0.0.1:5000",
-            "https://mod-depot.pages.dev",  # Your Cloudflare Pages domain
+            "https://mod-depot.pages.dev",
+            "https://curseforge-mod-downloader-production.up.railway.app",
             "*"  # Allow all origins during development
         ],
         "methods": ["GET", "POST", "OPTIONS"],
