@@ -553,17 +553,22 @@ def get_mod_files(mod_id):
             "pageSize": 1  # Just need the latest file
         }
         
-        response = requests.get(files_url, headers=headers, params=params, timeout=10)
+        print(f"Fetching files for mod ID: {mod_id}")
+        response = requests.get(files_url, headers=headers, params=params, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
             if data.get('data'):
+                print(f"Successfully got {len(data['data'])} files for mod {mod_id}")
                 return jsonify({'files': data['data']})
         
+        print(f"Failed to get files for mod {mod_id}: {response.status_code}")
         return jsonify({'files': []})
         
     except Exception as e:
         print(f"Error getting mod files: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 

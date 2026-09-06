@@ -552,6 +552,11 @@
                     // Fallback: try to get basic version info without downloading full modpack
                     try {
                         const filesResponse = await fetch(`${API_BASE}/mod/${modId}/files`);
+                        
+                        if (!filesResponse.ok) {
+                            throw new Error(`HTTP ${filesResponse.status}`);
+                        }
+                        
                         const filesData = await filesResponse.json();
                         
                         let versionInfo = null;

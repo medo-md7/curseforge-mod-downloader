@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoint Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button {
+            padding: 10px 20px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #5b4cdb; }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ModDepot API Endpoint Test</h1>
+    
+    <div class="test-section">
+        <h3>Test API Base URL</h3>
+        <input type="text" id="apiBase" value="https://curseforge-mod-downloader-production.up.railway.app/api">
+        <button onclick="setLocalAPI()">Use Local</button>
+        <button onclick="setProductionAPI()">Use Production</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test /api/mod/&lt;id&gt;/files</h3>
+        <input type="text" id="modId" value="431428" placeholder="Mod ID">
+        <button onclick="testModFiles()">Test</button>
+        <div id="modFilesResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test /api/modpack/&lt;id&gt;/extract-manifest</h3>
+        <input type="text" id="modpackId" value="431428" placeholder="Modpack ID">
+        <button onclick="testExtractManifest()">Test</button>
+        <div id="extractManifestResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test /api/search/modpacks</h3>
+        <input type="text" id="searchQuery" value="Cisco" placeholder="Search query">
+        <button onclick="testSearchModpacks()">Test</button>
+        <div id="searchModpacksResult" class="result"></div>
+    </div>
+
+    <script>
+        function getAPIBase() {
+            return document.getElementById('apiBase').value;
+        }
+
+        function setLocalAPI() {
+            document.getElementById('apiBase').value = 'http://127.0.0.1:5000/api';
+        }
+
+        function setProductionAPI() {
+            document.getElementById('apiBase').value = 'https://curseforge-mod-downloader-production.up.railway.app/api';
+        }
+
+        async function testModFiles() {
+            const modId = document.getElementById('modId').value;
+            const resultDiv = document.getElementById('modFilesResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${getAPIBase()}/mod/${modId}/files`);
+                const data = await response.json();
+                
+                resultDiv.textContent = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testExtractManifest() {
+            const modpackId = document.getElementById('modpackId').value;
+            const resultDiv = document.getElementById('extractManifestResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${getAPIBase()}/modpack/${modpackId}/extract-manifest`);
+                const data = await response.json();
+                
+                resultDiv.textContent = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testSearchModpacks() {
+            const query = document.getElementById('searchQuery').value;
+            const resultDiv = document.getElementById('searchModpacksResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${getAPIBase()}/search/modpacks?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                resultDiv.textContent = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>
