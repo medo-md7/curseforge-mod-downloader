@@ -558,10 +558,22 @@ def extract_modpack_manifest(mod_id):
                 minecraft_version = manifest.get('minecraft', {}).get('version')
                 mod_files = manifest.get('files', [])
                 
+                # Extract loader information
+                loader_info = None
+                mod_loaders = manifest.get('minecraft', {}).get('modLoaders', [])
+                if mod_loaders:
+                    loader_info = mod_loaders[0].get('id', '')
+                    # Extract loader type (forge, fabric, neoforge, quilt)
+                    if loader_info:
+                        loader_type = loader_info.split('-')[0].lower()
+                        print(f"Detected loader: {loader_type} ({loader_info})")
+                
                 return jsonify({
                     'success': True,
                     'manifest': manifest,
                     'minecraft_version': minecraft_version,
+                    'loader_type': loader_type if loader_info else None,
+                    'loader_info': loader_info,
                     'mod_count': len(mod_files),
                     'mod_list': mod_files
                 })
