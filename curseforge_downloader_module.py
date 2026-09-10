@@ -203,6 +203,53 @@ def search_mod_by_name(mod_name, content_type='mods'):
             if data.get('data'):
                 results = data['data']
                 
+                # Reorder results to prioritize exact matches
+                query_lower = mod_name.lower()
+                
+                # Function to calculate match score
+                def calculate_match_score(mod):
+                    name_lower = mod.get('name', '').lower()
+                    slug_lower = mod.get('slug', '').lower()
+                    summary_lower = mod.get('summary', '').lower()
+                    
+                    score = 0
+                    
+                    # Exact name match (highest priority)
+                    if name_lower == query_lower:
+                        score += 100
+                    # Name starts with query
+                    elif name_lower.startswith(query_lower):
+                        score += 50
+                    # Query in name
+                    elif query_lower in name_lower:
+                        score += 25
+                    
+                    # Exact slug match
+                    if slug_lower == query_lower:
+                        score += 80
+                    # Slug starts with query
+                    elif slug_lower.startswith(query_lower):
+                        score += 40
+                    # Query in slug
+                    elif query_lower in slug_lower:
+                        score += 20
+                    
+                    # Query in summary
+                    elif query_lower in summary_lower:
+                        score += 10
+                    
+                    # Bonus for high download count (popular mods)
+                    download_count = mod.get('downloadCount', 0)
+                    if download_count > 10000000:  # 10M+ downloads
+                        score += 5
+                    elif download_count > 1000000:  # 1M+ downloads
+                        score += 3
+                    
+                    return score
+                
+                # Sort by match score
+                results.sort(key=calculate_match_score, reverse=True)
+                
                 # Filter results based on content type using categories
                 if content_type == 'shaders':
                     # Filter for shader-related categories
@@ -234,20 +281,7 @@ def search_mod_by_name(mod_name, content_type='mods'):
                     if filtered_results:
                         results = filtered_results
                 
-                # Improved exact match prioritization
-                # 1. Exact name match (case-insensitive)
-                exact_name_matches = [mod for mod in results if mod.get('name', '').lower() == mod_name.lower()]
-                # 2. Name contains search term
-                name_contains = [mod for mod in results if mod_name.lower() in mod.get('name', '').lower() and mod not in exact_name_matches]
-                # 3. Slug contains search term
-                slug_contains = [mod for mod in results if mod_name.lower() in mod.get('slug', '').lower() and mod not in exact_name_matches and mod not in name_contains]
-                # 4. Remaining results
-                other_results = [mod for mod in results if mod not in exact_name_matches and mod not in name_contains and mod not in slug_contains]
-                
-                # Combine in priority order
-                prioritized_results = exact_name_matches + name_contains + slug_contains + other_results
-                
-                return prioritized_results
+                return results
         
         return []
     except Exception as e:
