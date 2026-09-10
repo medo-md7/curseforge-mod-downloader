@@ -124,8 +124,8 @@
                     <select id="mod-loader-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                         <option value="1">Forge</option>
                         <option value="2">Fabric</option>
-                        <option value="3">NeoForge</option>
-                        <option value="4">Quilt</option>
+                        <option value="6">NeoForge</option>
+                        <option value="5">Quilt</option>
                     </select>
                     <button 
                         onclick="getModVersions()"
@@ -794,7 +794,10 @@
                             // Try to find the specific file ID if provided
                             let file = fileData.files[0];
                             if (fileId) {
-                                const specificFile = fileData.files.find(f => f.id === parseInt(fileId));
+                                // Try both string and number comparison
+                                const specificFile = fileData.files.find(f => 
+                                    f.id === parseInt(fileId) || f.id === fileId
+                                );
                                 if (specificFile) {
                                     file = specificFile;
                                     console.log(`Found specific file ${fileId} for mod ${projectId}: ${file.fileName}`);

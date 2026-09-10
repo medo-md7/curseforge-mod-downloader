@@ -636,7 +636,28 @@ def get_mod_versions_endpoint(mod_id):
         game_version = request.args.get('game_version', None)  # None = all versions
         mod_loader_type = request.args.get('mod_loader_type', '1')  # 1 = Forge, 2 = Fabric
         
-        versions = get_mod_versions(mod_id, game_version, int(mod_loader_type))
+        # Convert string loader types to numeric values
+        loader_type_mapping = {
+            'forge': 1,
+            'fabric': 2,
+            'neoforge': 6,
+            'quilt': 5,
+            '1': 1,
+            '2': 2,
+            '5': 5,
+            '6': 6
+        }
+        
+        if isinstance(mod_loader_type, str) and mod_loader_type.lower() in loader_type_mapping:
+            mod_loader_type = loader_type_mapping[mod_loader_type.lower()]
+        else:
+            mod_loader_type = int(mod_loader_type)
+        
+        print(f"Getting versions for mod {mod_id}, game_version: {game_version}, mod_loader_type: {mod_loader_type}")
+        
+        versions = get_mod_versions(mod_id, game_version, mod_loader_type)
+        
+        print(f"Found {len(versions)} versions")
         
         # Extract all unique game versions from the files
         all_game_versions = set()
