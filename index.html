@@ -776,9 +776,12 @@
                             // Try to find the specific file ID if provided
                             let file = fileData.files[0];
                             if (fileId) {
-                                const specificFile = fileData.files.find(f => f.id === fileId);
+                                const specificFile = fileData.files.find(f => f.id === parseInt(fileId));
                                 if (specificFile) {
                                     file = specificFile;
+                                    console.log(`Found specific file ${fileId} for mod ${projectId}: ${file.fileName}`);
+                                } else {
+                                    console.log(`Could not find file ID ${fileId} for mod ${projectId}, using latest`);
                                 }
                             }
                             
@@ -787,6 +790,7 @@
                                 download_url: file.downloadUrl,
                                 file_name: file.fileName,
                                 file_length: file.fileLength,
+                                file_id: file.id,
                                 source_url: `https://www.curseforge.com/minecraft/mc-mods/${mod.slug}`,
                                 success: true
                             });
@@ -850,7 +854,10 @@
                             <h4 class="font-semibold text-gray-700">Mods Ready for Download:</h4>
                             ${successfulMods.map(mod => `
                                 <div class="flex items-center justify-between bg-white border border-gray-200 rounded p-3">
-                                    <span class="text-gray-800">${mod.name}</span>
+                                    <div class="flex-1">
+                                        <span class="text-gray-800">${mod.name}</span>
+                                        ${mod.file_id ? `<span class="text-xs text-gray-400 ml-2">(File ID: ${mod.file_id})</span>` : ''}
+                                    </div>
                                     <a href="${mod.download_url}" download="${mod.file_name}" target="_blank" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
                                         Download
                                     </a>
@@ -1662,7 +1669,10 @@
                         <h4 class="font-semibold text-gray-700">Mods Ready for Download:</h4>
                         ${successfulMods.map(mod => `
                             <div class="flex items-center justify-between bg-white border border-gray-200 rounded p-3">
-                                <span class="text-gray-800">${mod.name}</span>
+                                <div class="flex-1">
+                                    <span class="text-gray-800">${mod.name}</span>
+                                    ${mod.file_id ? `<span class="text-xs text-gray-400 ml-2">(File ID: ${mod.file_id})</span>` : ''}
+                                </div>
                                 <a href="${mod.download_url}" download="${mod.file_name}" target="_blank" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
                                     Download
                                 </a>

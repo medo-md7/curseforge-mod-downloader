@@ -33,27 +33,20 @@ from curseforge_downloader_module import (
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__)
-
-# Configure CORS with maximum permissiveness
+# Configure CORS to allow requests from Cloudflare Pages and local development
 CORS(app, resources={
     r"/*": {
-        "origins": "*",  # Allow all origins
-        "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "expose_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "max_age": 600
+        "origins": [
+            "http://localhost:5000",
+            "http://127.0.0.1:5000",
+            "https://mod-depot.pages.dev",
+            "https://curseforge-mod-downloader-production.up.railway.app",
+            "*"  # Allow all origins during development
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
     }
 })
-
-# Additional CORS middleware to ensure headers are always set
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
 
 # Configuration
 UPLOAD_FOLDER = Path('uploads')
@@ -602,7 +595,7 @@ def get_mod_files(mod_id):
         files_url = f"{CURSEFORGE_API_BASE}/mods/{mod_id}/files"
         params = {
             "gameVersion": None,  # Get all versions
-            "pageSize": 1  # Just need the latest file
+            "pageSize": 50  # Get more files to find the specific one from manifest
         }
         
         print(f"Fetching files for mod ID: {mod_id}")
