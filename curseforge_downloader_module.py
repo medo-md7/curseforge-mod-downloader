@@ -265,14 +265,16 @@ def get_mod_versions(mod_id, game_version=None, mod_loader_type=1):
         
         url = f"{CURSEFORGE_API_BASE}/mods/{mod_id}/files"
         params = {
-            "modLoaderType": mod_loader_type
+            "modLoaderType": mod_loader_type,
+            "pageSize": 50  # Get more versions to ensure we find them
         }
         
         # Only add game_version filter if specified
         if game_version:
             params["gameVersion"] = game_version
         
-        response = requests.get(url, headers=headers, params=params, timeout=10)
+        print(f"  Calling CurseForge API with params: {params}")
+        response = requests.get(url, headers=headers, params=params, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
