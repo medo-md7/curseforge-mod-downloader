@@ -260,6 +260,8 @@ def search_mod_by_name(mod_name, content_type='mods'):
                                             for keyword in shader_keywords)]
                     if filtered_results:
                         results = filtered_results
+                    # Re-sort filtered results by match score
+                    results.sort(key=calculate_match_score, reverse=True)
                 
                 elif content_type == 'datapacks':
                     # Filter for data pack related categories
@@ -270,6 +272,8 @@ def search_mod_by_name(mod_name, content_type='mods'):
                                             for keyword in datapack_keywords)]
                     if filtered_results:
                         results = filtered_results
+                    # Re-sort filtered results by match score
+                    results.sort(key=calculate_match_score, reverse=True)
                 
                 elif content_type == 'resourcepacks':
                     # Filter for resource pack categories, exclude shaders
@@ -280,6 +284,8 @@ def search_mod_by_name(mod_name, content_type='mods'):
                                                for keyword in shader_keywords)]
                     if filtered_results:
                         results = filtered_results
+                    # Re-sort filtered results by match score
+                    results.sort(key=calculate_match_score, reverse=True)
                 
                 return results
         
