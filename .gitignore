@@ -27,6 +27,11 @@ instance/
 .DS_Store
 Thumbs.db
 
+# Images and assets (keep structure but ignore originals)
+*.jpeg
+*.jpg
+!public/images/*.png
+
 # Downloads and uploads (keep structure but ignore content)
 downloads/*
 uploads/*

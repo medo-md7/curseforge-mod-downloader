@@ -459,7 +459,8 @@ def search_mods():
                 'summary': mod.get('summary'),
                 'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
                 'download_count': mod.get('downloadCount'),
-                'categories': [cat.get('name') for cat in mod.get('categories', [])]
+                'categories': [cat.get('name') for cat in mod.get('categories', [])],
+                'logo': mod.get('logo', {}).get('url') if isinstance(mod.get('logo'), dict) else mod.get('logo')
             })
         
         return jsonify({'results': formatted_results})
