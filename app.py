@@ -70,6 +70,18 @@ def serve_test_page():
     return send_from_directory('.', 'test_api.html')
 
 
+@app.route('/images/<path:filename>')
+def serve_images(filename):
+    """Serve static images from public/images directory"""
+    return send_from_directory('public/images', filename)
+
+
+@app.route('/logo.png')
+def serve_logo():
+    """Serve the main logo file"""
+    return send_from_directory('.', 'logo.png')
+
+
 @app.route('/api/download/single', methods=['POST'])
 def download_single_mod():
     """Download a single mod by name with optional version selection"""
@@ -371,6 +383,16 @@ def search_modpacks():
                 # Format results for frontend
                 formatted_results = []
                 for mod in results:
+                    # Debug logo extraction
+                    logo_data = mod.get('logo')
+                    logo_url = None
+                    if isinstance(logo_data, dict):
+                        logo_url = logo_data.get('url')
+                    elif isinstance(logo_data, str):
+                        logo_url = logo_data
+                    
+                    print(f"Modpack: {mod.get('name')}, Logo data type: {type(logo_data)}, Logo URL: {logo_url}")
+                    
                     formatted_results.append({
                         'id': mod.get('id'),
                         'name': mod.get('name'),
@@ -378,7 +400,8 @@ def search_modpacks():
                         'summary': mod.get('summary'),
                         'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
                         'download_count': mod.get('downloadCount'),
-                        'categories': [cat.get('name') for cat in mod.get('categories', [])]
+                        'categories': [cat.get('name') for cat in mod.get('categories', [])],
+                        'logo': logo_url
                     })
                 
                 return jsonify({'results': formatted_results})
@@ -409,6 +432,14 @@ def search_modpacks():
                             is_modpack = any(cat.get('name', '').lower() in ['modpack', 'adventure', 'quest', 'map'] 
                                            for cat in categories)
                             if is_modpack:
+                                # Debug logo extraction
+                                logo_data = mod.get('logo')
+                                logo_url = None
+                                if isinstance(logo_data, dict):
+                                    logo_url = logo_data.get('url')
+                                elif isinstance(logo_data, str):
+                                    logo_url = logo_data
+                                
                                 modpack_results.append({
                                     'id': mod.get('id'),
                                     'name': mod.get('name'),
@@ -416,7 +447,8 @@ def search_modpacks():
                                     'summary': mod.get('summary'),
                                     'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
                                     'download_count': mod.get('downloadCount'),
-                                    'categories': [cat.get('name') for cat in categories]
+                                    'categories': [cat.get('name') for cat in categories],
+                                    'logo': logo_url
                                 })
                         
                         if modpack_results:
@@ -452,6 +484,16 @@ def search_mods():
         # Format results for frontend
         formatted_results = []
         for mod in results:
+            # Debug logo extraction
+            logo_data = mod.get('logo')
+            logo_url = None
+            if isinstance(logo_data, dict):
+                logo_url = logo_data.get('url')
+            elif isinstance(logo_data, str):
+                logo_url = logo_data
+            
+            print(f"Mod: {mod.get('name')}, Logo data type: {type(logo_data)}, Logo URL: {logo_url}")
+            
             formatted_results.append({
                 'id': mod.get('id'),
                 'name': mod.get('name'),
@@ -460,7 +502,7 @@ def search_mods():
                 'author': mod.get('author') if isinstance(mod.get('author'), dict) else mod.get('author', ''),
                 'download_count': mod.get('downloadCount'),
                 'categories': [cat.get('name') for cat in mod.get('categories', [])],
-                'logo': mod.get('logo', {}).get('url') if isinstance(mod.get('logo'), dict) else mod.get('logo')
+                'logo': logo_url
             })
         
         return jsonify({'results': formatted_results})
