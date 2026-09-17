@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,21 @@
         }
         .pixel-shadow {
             box-shadow: 4px 4px 0px rgba(15, 58, 89, 0.2);
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+        }
+        .logo-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .rtl-text {
+            direction: rtl;
+            text-align: right;
         }
         .upload-zone {
             border: 2px dashed #cbd5e1;
@@ -64,10 +79,12 @@
     <header class="gradient-bg text-white py-6 shadow-lg">
         <div class="container mx-auto px-4">
             <div class="flex items-center gap-4">
-                <img src="logo.png" alt="ModDepot Logo" class="w-16 h-16 sm:w-20 sm:h-20">
+                <div class="logo-container">
+                    <img src="logo.png" alt="ModDepot Logo" class="logo-image w-16 h-16 sm:w-20 sm:h-20" onerror="this.style.display='none';">
+                </div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold">ModDepot</h1>
-                    <p class="text-purple-100 mt-2 text-sm sm:text-base">Download Minecraft mods, shaders, data packs, and resource packs from CurseForge easily</p>
+                    <p class="text-sky-100 mt-2 text-sm sm:text-base">Download Minecraft mods, shaders, data packs, and resource packs from CurseForge easily</p>
                 </div>
             </div>
         </div>
