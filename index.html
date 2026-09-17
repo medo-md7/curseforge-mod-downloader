@@ -8,18 +8,21 @@
     <link rel="icon" type="image/png" href="logo.png">
     <style>
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1E70A2 0%, #0F3A59 100%);
         }
         .card-shadow {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 4px 4px 0px rgba(15, 58, 89, 0.2);
+        }
+        .pixel-shadow {
+            box-shadow: 4px 4px 0px rgba(15, 58, 89, 0.2);
         }
         .upload-zone {
             border: 2px dashed #cbd5e1;
             transition: all 0.3s ease;
         }
         .upload-zone:hover, .upload-zone.dragover {
-            border-color: #667eea;
-            background-color: #f8fafc;
+            border-color: #2CB673;
+            background-color: #F0FDF4;
         }
         .progress-bar {
             transition: width 0.3s ease;
@@ -73,7 +76,7 @@
     <main class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Tab Navigation -->
         <div class="flex space-x-2 mb-8 overflow-x-auto pb-2">
-            <button id="tab-mods" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-white text-purple-600 shadow-md whitespace-nowrap" onclick="switchTab('mods')">
+            <button id="tab-mods" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-white text-emerald-600 shadow-md whitespace-nowrap" onclick="switchTab('mods')">
                 Mods
             </button>
             <button id="tab-shaders" class="tab-btn px-4 py-2 rounded-lg font-semibold transition-all bg-gray-200 text-gray-600 whitespace-nowrap" onclick="switchTab('shaders')">
@@ -102,13 +105,13 @@
                         type="text" 
                         id="mod-name-input" 
                         placeholder="e.g., JEI, OptiFine, Tinkers Construct"
-                        class="flex-1 mobile-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        class="flex-1 mobile-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-700 focus:border-transparent outline-none"
                         onkeypress="if(event.key === 'Enter') searchMods()"
                     >
                     <button 
                         id="search-btn"
                         onclick="searchMods()"
-                        class="mobile-full px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                        class="mobile-full px-8 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
                     >
                         Search
                     </button>
@@ -123,17 +126,17 @@
 
             <!-- Step 2: Version Selection -->
             <div id="version-step" class="hidden mb-6">
-                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-                    <h3 class="font-semibold text-purple-800 mb-2">Selected Mod</h3>
-                    <p id="selected-mod-name" class="text-purple-700"></p>
-                    <p id="selected-mod-summary" class="text-sm text-purple-600"></p>
+                <div class="bg-sky-50 border border-sky-200 rounded-lg p-4 mb-4">
+                    <h3 class="font-semibold text-sky-800 mb-2">Selected Mod</h3>
+                    <p id="selected-mod-name" class="text-sky-700"></p>
+                    <p id="selected-mod-summary" class="text-sm text-emerald-600"></p>
                 </div>
                 
                 <div class="flex gap-4 mb-4 mobile-stack">
-                    <select id="game-version-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <select id="game-version-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-700 outline-none">
                         <option value="all">All Versions</option>
                     </select>
-                    <select id="mod-loader-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <select id="mod-loader-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-700 outline-none">
                         <option value="1">Forge</option>
                         <option value="2">Fabric</option>
                         <option value="6">NeoForge</option>
@@ -141,7 +144,7 @@
                     </select>
                     <button 
                         onclick="getModVersions()"
-                        class="mobile-full px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                        class="mobile-full px-6 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
                     >
                         Get Versions
                     </button>
@@ -168,7 +171,7 @@
             <div id="single-status" class="mt-6 hidden">
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="flex items-center">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600 mr-3"></div>
                         <span class="text-gray-700">Downloading...</span>
                     </div>
                 </div>
@@ -184,19 +187,19 @@
             <p class="text-gray-600 mb-6">Search for modpacks or upload files to download multiple mods</p>
             
             <!-- Modpack Search -->
-            <div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <h3 class="font-semibold text-purple-800 mb-4">Search for Modpack</h3>
+            <div class="mb-6 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+                <h3 class="font-semibold text-sky-800 mb-4">Search for Modpack</h3>
                 <div class="flex gap-4 mobile-stack">
                     <input 
                         type="text" 
                         id="modpack-search-input" 
                         placeholder="e.g., RLCraft, ATM9, Better Minecraft"
-                        class="flex-1 mobile-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                        class="flex-1 mobile-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-700 focus:border-transparent outline-none"
                         onkeypress="if(event.key === 'Enter') searchModpacks()"
                     >
                     <button 
                         onclick="searchModpacks()"
-                        class="mobile-full px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                        class="mobile-full px-6 py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors"
                     >
                         Search Modpacks
                     </button>
@@ -214,7 +217,7 @@
                     <!-- Modlist Upload -->
                     <div 
                         id="upload-zone"
-                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
+                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-emerald-400 transition-colors"
                         onclick="triggerFileInput()"
                     >
                         <input type="file" id="file-input" accept=".html" class="hidden" onchange="handleFileUpload(event)">
@@ -230,7 +233,7 @@
                     <!-- Manifest Upload -->
                     <div 
                         id="manifest-upload-zone"
-                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors"
+                        class="upload-zone rounded-xl p-8 text-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-emerald-400 transition-colors"
                         onclick="triggerManifestInput()"
                     >
                         <input type="file" id="manifest-input" accept=".json" class="hidden" onchange="handleManifestUpload(event)">
@@ -247,9 +250,9 @@
 
             <!-- File Info -->
             <div id="file-info" class="mt-4 hidden">
-                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
+                <div class="bg-sky-50 border border-sky-200 rounded-lg p-4 flex items-center justify-between">
                     <div class="flex items-center">
-                        <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-8 h-8 text-emerald-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <div>
@@ -280,7 +283,7 @@
                 <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-800">File Preview</h3>
-                        <span id="total-mods-count" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium"></span>
+                        <span id="total-mods-count" class="bg-purple-100 text-sky-800 px-3 py-1 rounded-full text-sm font-medium"></span>
                     </div>
                     
                     <div id="preview-mods-list" class="space-y-3 max-h-96 overflow-y-auto mb-4"></div>
@@ -308,7 +311,7 @@
             <div id="bulk-status" class="mt-6 hidden">
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="flex items-center">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-3"></div>
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600 mr-3"></div>
                         <span class="text-gray-700">Processing...</span>
                     </div>
                 </div>
@@ -368,15 +371,15 @@
                         </div>
                     </div>
                     
-                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-6">
+                    <div class="bg-sky-50 border border-sky-200 rounded-xl p-6">
                         <div class="flex items-center">
-                            <div class="bg-purple-500 rounded-full p-3 mr-4">
+                            <div class="bg-emerald-500 rounded-full p-3 mr-4">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-purple-600 text-sm font-medium">Total Mods</p>
+                                <p class="text-emerald-600 text-sm font-medium">Total Mods</p>
                                 <p id="total-mods" class="text-2xl font-bold text-gray-800">0</p>
                             </div>
                         </div>
@@ -468,9 +471,9 @@
                         <div class="bg-white border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" onclick="selectModpack(${mod.id}, '${mod.name.replace(/'/g, "\\'")}', '${mod.slug.replace(/'/g, "\\'")}')">
                             <div class="flex items-center gap-4">
                                 <div class="flex-shrink-0">
-                                    <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                        ${mod.logo ? `<img src="${mod.logo}" alt="${mod.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSI4YjNWZDYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMjAgN2wtOC00bTggNGwtOC00bS04IDRoMTYiPjwvcGF0aD48L3N2Zz4=';">` : `
-                                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="w-16 h-16 bg-sky-100 rounded-lg flex items-center justify-center overflow-hidden">
+                                        ${mod.logo ? `<img src="${mod.logo}" alt="${mod.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMUM3MEEyIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZD0iTTIwIDdsLTgtNG0tIDRsLTgtNG0tOCA0aDE2Ij48L3BhdGg+PC9zdmc+';">` : `
+                                            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4m8 4l-8-4m-8 4h16"></path>
                                             </svg>
                                         `}
@@ -572,7 +575,7 @@
                             <p class="text-blue-600 text-xs mt-1">Found ${manifestData.mod_count} mods in modpack</p>
                         </div>
                         ${loaderInfo}
-                        <button onclick="extractModpackMods()" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                        <button onclick="extractModpackMods()" class="mt-3 block w-full px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors">
                             Show Mod List
                         </button>
                         <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
@@ -655,9 +658,9 @@
                                     <p class="text-blue-600 text-xs mt-1">Use this version when uploading manifest</p>
                                 </div>
                             ` : ''}
-                            <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                                <p class="text-purple-800 font-semibold text-sm">To download individual mods:</p>
-                                <ol class="text-purple-700 text-xs mt-2 list-decimal list-inside space-y-1">
+                            <div class="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                                <p class="text-sky-800 font-semibold text-sm">To download individual mods:</p>
+                                <ol class="text-sky-700 text-xs mt-2 list-decimal list-inside space-y-1">
                                     <li>Download the modpack file from CurseForge directly</li>
                                     <li>Extract it on your computer and find manifest.json</li>
                                     <li>Upload manifest.json to the right upload zone</li>
@@ -665,7 +668,7 @@
                                 </ol>
                             </div>
                             ${downloadUrl ? `
-                                <a href="${downloadUrl}" download="${fileName}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                                <a href="${downloadUrl}" download="${fileName}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors text-center">
                                     Download Modpack from CurseForge
                                 </a>
                             ` : ''}
@@ -686,16 +689,16 @@
                                 <p class="text-red-800 font-semibold text-sm">Backend service unavailable</p>
                                 <p class="text-red-600 text-xs mt-1">Railway service is experiencing issues (502 error)</p>
                             </div>
-                            <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                                <p class="text-purple-800 font-semibold text-sm">Manual workflow:</p>
-                                <ol class="text-purple-700 text-xs mt-2 list-decimal list-inside space-y-1">
+                            <div class="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                                <p class="text-sky-800 font-semibold text-sm">Manual workflow:</p>
+                                <ol class="text-sky-700 text-xs mt-2 list-decimal list-inside space-y-1">
                                     <li>Download the modpack from CurseForge</li>
                                     <li>Extract it and find manifest.json</li>
                                     <li>Upload manifest.json to the right upload zone</li>
                                     <li>System will extract mod list for individual download</li>
                                 </ol>
                             </div>
-                            <a href="https://www.curseforge.com/minecraft/modpacks/${selectedModpack.slug}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                            <a href="https://www.curseforge.com/minecraft/modpacks/${selectedModpack.slug}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors text-center">
                                 View on CurseForge
                             </a>
                             <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
@@ -718,16 +721,16 @@
                         <p class="text-red-800 font-semibold text-sm">Service unavailable</p>
                         <p class="text-red-600 text-xs mt-1">${error.message}</p>
                     </div>
-                    <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                        <p class="text-purple-800 font-semibold text-sm">Alternative approach:</p>
-                        <ol class="text-purple-700 text-xs mt-2 list-decimal list-inside space-y-1">
+                    <div class="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+                        <p class="text-sky-800 font-semibold text-sm">Alternative approach:</p>
+                        <ol class="text-sky-700 text-xs mt-2 list-decimal list-inside space-y-1">
                             <li>Download the modpack from CurseForge</li>
                             <li>Extract it and find manifest.json</li>
                             <li>Upload manifest.json to the right upload zone</li>
                             <li>System will extract mod list for individual download</li>
                         </ol>
                     </div>
-                    <a href="https://www.curseforge.com/minecraft/modpacks/${selectedModpack.slug}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-center">
+                    <a href="https://www.curseforge.com/minecraft/modpacks/${selectedModpack.slug}" target="_blank" class="mt-3 block w-full px-4 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors text-center">
                         View on CurseForge
                     </a>
                     <button onclick="clearModpackSelection()" class="text-red-500 hover:text-red-700 text-sm mt-2">Clear selection</button>
@@ -924,7 +927,7 @@
                             </div>
                         ` : ''}
                         
-                        <button onclick="resetBulkDownload()" class="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <button onclick="resetBulkDownload()" class="mt-4 w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
                             Download Another Modpack
                         </button>
                     </div>
@@ -1030,7 +1033,7 @@
             
             // Reset all tab styles
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-white', 'text-purple-600', 'shadow-md');
+                btn.classList.remove('bg-white', 'text-emerald-600', 'shadow-md');
                 btn.classList.add('bg-gray-200', 'text-gray-600');
             });
             
@@ -1038,7 +1041,7 @@
             if (tab === 'bulk') {
                 bulkSection.classList.remove('hidden');
                 document.getElementById('tab-bulk').classList.remove('bg-gray-200', 'text-gray-600');
-                document.getElementById('tab-bulk').classList.add('bg-white', 'text-purple-600', 'shadow-md');
+                document.getElementById('tab-bulk').classList.add('bg-white', 'text-emerald-600', 'shadow-md');
             } else {
                 singleSection.classList.remove('hidden');
                 currentContentType = tab;
@@ -1050,7 +1053,7 @@
                 const tabElement = document.getElementById(`tab-${tab}`);
                 if (tabElement) {
                     tabElement.classList.remove('bg-gray-200', 'text-gray-600');
-                    tabElement.classList.add('bg-white', 'text-purple-600', 'shadow-md');
+                    tabElement.classList.add('bg-white', 'text-emerald-600', 'shadow-md');
                 }
             }
             
@@ -1155,9 +1158,9 @@
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors" onclick="selectMod(${mod.id}, '${mod.name.replace(/'/g, "\\'")}', '${mod.summary.replace(/'/g, "\\'")}', '${mod.slug}')">
                             <div class="flex items-start gap-4">
                                 <div class="flex-shrink-0">
-                                    <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                        ${mod.logo ? `<img src="${mod.logo}" alt="${mod.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSI4YjNWZDYiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMjAgN2wtOC00bTggNGwtOC00bS04IDRoMTYiPjwvcGF0aD48L3N2Zz4=';">` : `
-                                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="w-16 h-16 bg-sky-100 rounded-lg flex items-center justify-center overflow-hidden">
+                                        ${mod.logo ? `<img src="${mod.logo}" alt="${mod.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMUM3MEEyIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZD0iTTIwIDdsLTgtNG0tIDRsLTgtNG0tOCA0aDE2Ij48L3BhdGg+PC9zdmc+';">` : `
+                                            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4m8 4l-8-4m-8 4h16"></path>
                                             </svg>
                                         `}
@@ -1269,7 +1272,7 @@
                         const safeGameVersions = version.game_versions || [];
                         
                         return `
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors ${index === 0 ? 'ring-2 ring-purple-500' : ''}" onclick="selectVersion(${version.id}, '${safeFileName}', '${safeDownloadUrl}', ${safeFileLength}, this)">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors ${index === 0 ? 'ring-2 ring-emerald-500' : ''}" onclick="selectVersion(${version.id}, '${safeFileName}', '${safeDownloadUrl}', ${safeFileLength}, this)">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">
@@ -1311,13 +1314,13 @@
             // Remove highlight from all versions
             if (document.querySelectorAll('#version-list > div')) {
                 document.querySelectorAll('#version-list > div').forEach(el => {
-                    el.classList.remove('ring-2', 'ring-purple-500');
+                    el.classList.remove('ring-2', 'ring-emerald-500');
                 });
             }
 
             // Add highlight to selected version
             if (element && element.classList) {
-                element.classList.add('ring-2', 'ring-purple-500');
+                element.classList.add('ring-2', 'ring-emerald-500');
             }
 
             document.getElementById('download-step').classList.remove('hidden');
@@ -1514,7 +1517,7 @@
                                         <span>${formatNumber(mod.download_count)} downloads</span>
                                     </div>
                                 </div>
-                                <a href="${mod.url}" target="_blank" class="text-purple-600 hover:text-purple-800 text-sm">
+                                <a href="${mod.url}" target="_blank" class="text-emerald-600 hover:text-sky-800 text-sm">
                                     View on CurseForge
                                 </a>
                             </div>
@@ -1686,7 +1689,7 @@
                         </div>
                     </div>
                     <div class="flex gap-4 mb-4 mobile-stack">
-                        <select id="bulk-version-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                        <select id="bulk-version-select" class="mobile-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-700 outline-none">
                             <option value="">Select Minecraft Version</option>
                             <option value="1.20.1">1.20.1</option>
                             <option value="1.20">1.20</option>
@@ -1753,7 +1756,7 @@
                         </div>
                     ` : ''}
                     
-                    <button onclick="resetBulkDownload()" class="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <button onclick="resetBulkDownload()" class="mt-4 w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
                         Download Another File
                     </button>
                 </div>

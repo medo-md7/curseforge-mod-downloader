@@ -383,15 +383,13 @@ def search_modpacks():
                 # Format results for frontend
                 formatted_results = []
                 for mod in results:
-                    # Debug logo extraction
+                    # Extract logo URL from response
                     logo_data = mod.get('logo')
                     logo_url = None
                     if isinstance(logo_data, dict):
                         logo_url = logo_data.get('url')
                     elif isinstance(logo_data, str):
                         logo_url = logo_data
-                    
-                    print(f"Modpack: {mod.get('name')}, Logo data type: {type(logo_data)}, Logo URL: {logo_url}")
                     
                     formatted_results.append({
                         'id': mod.get('id'),
@@ -432,7 +430,7 @@ def search_modpacks():
                             is_modpack = any(cat.get('name', '').lower() in ['modpack', 'adventure', 'quest', 'map'] 
                                            for cat in categories)
                             if is_modpack:
-                                # Debug logo extraction
+                                # Extract logo URL from response
                                 logo_data = mod.get('logo')
                                 logo_url = None
                                 if isinstance(logo_data, dict):
@@ -484,15 +482,13 @@ def search_mods():
         # Format results for frontend
         formatted_results = []
         for mod in results:
-            # Debug logo extraction
+            # Extract logo URL from response
             logo_data = mod.get('logo')
             logo_url = None
             if isinstance(logo_data, dict):
                 logo_url = logo_data.get('url')
             elif isinstance(logo_data, str):
                 logo_url = logo_data
-            
-            print(f"Mod: {mod.get('name')}, Logo data type: {type(logo_data)}, Logo URL: {logo_url}")
             
             formatted_results.append({
                 'id': mod.get('id'),
