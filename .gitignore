@@ -30,6 +30,7 @@ Thumbs.db
 # Images and assets (keep structure but ignore originals)
 *.jpeg
 *.jpg
+Gemini_Generated_Image*.png
 !public/images/*.png
 !logo.png
 
