@@ -168,7 +168,7 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 'categoryFilter': None
             },
             'shaders': {
-                'classId': 12,         # Texture Packs (shaders are often here)
+                'classId': None,       # Don't use class filter for shaders - search broader
                 'categoryFilter': None
             },
             'datapacks': {
@@ -252,12 +252,16 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 
                 # Filter results based on content type using categories
                 if content_type == 'shaders':
-                    # Filter for shader-related categories
-                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting', 'iris', 'optifine']
+                    # Filter for shader-related categories - be more specific
+                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting', 'iris', 'optifine', 'solas', 'bsl', 'seus', 'chocapic', 'sildur', 'complementary']
+                    # Also include common shader pack names
+                    shader_names = ['solas', 'bsl', 'seus', 'chocapic', 'sildur', 'complementary', 'triliton', 'beyond', 'spectrum', 'continuum']
+                    
                     filtered_results = [mod for mod in results if 
                                         any(keyword in mod.get('name', '').lower() or 
                                             any(keyword in cat.get('name', '').lower() for cat in mod.get('categories', []))
-                                            for keyword in shader_keywords)]
+                                            for keyword in shader_keywords) or
+                                        any(shader_name in mod.get('name', '').lower() for shader_name in shader_names)]
                     if filtered_results:
                         results = filtered_results
                     # Re-sort filtered results by match score
