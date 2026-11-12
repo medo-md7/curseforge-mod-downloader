@@ -459,6 +459,10 @@
             ? 'http://127.0.0.1:5000/api' 
             : 'https://curseforge-mod-downloader-production.up.railway.app/api';
         
+        // Add CORS fallback for production
+        const PRODUCTION_API = 'https://curseforge-mod-downloader-production.up.railway.app/api';
+        const PRODUCTION_FRONTEND = 'mod-depot.pages.dev';
+        
         // Debug: Log API configuration
         console.log('API Configuration:');
         console.log('Hostname:', window.location.hostname);
