@@ -252,13 +252,37 @@ def search_mod_by_name(mod_name, content_type='mods'):
                 
                 # Filter results based on content type using categories
                 if content_type == 'shaders':
-                    # For shaders, just apply a simple filter to remove obvious non-shaders
-                    # and rely on the intelligent scoring to put real shaders first
-                    non_shader_keywords = ['modpack', 'resource pack', 'texture pack', 'datapack', 'client', 'smp']
-                    filtered_results = [mod for mod in results if not any(keyword in mod.get('name', '').lower() for keyword in non_shader_keywords)]
+                    # Filter for shader-related categories - be very specific
+                    shader_keywords = ['shader', 'shaders', 'visual', 'graphics', 'lighting', 'iris', 'optifine']
+                    # Common shader pack names
+                    shader_names = ['solas', 'bsl', 'seus', 'chocapic', 'sildur', 'complementary', 'triliton', 'beyond', 'spectrum', 'continuum', 'bliss']
+                    
+                    # Non-shader keywords to exclude (be very aggressive)
+                    non_shader_keywords = ['modpack', 'client', 'smp', 'vanilla+', 'multiplayer', 'exploration', 'combat', 'pvp', 'sci-fi', '32x', '16x', 'modern', 'medieval', 'adventure', 'magic', 'tech', 'quests', 'small / light', 'resource pack', 'texture pack', 'datapack', 'pack', 'distant horizons', 'hardest pack', 'lite', 'world evils', 'solassia', 'abigocraft', 'outbound', 'eldritch', 'qhsolas']
+                    
+                    filtered_results = []
+                    for mod in results:
+                        mod_name_lower = mod.get('name', '').lower()
+                        mod_summary_lower = mod.get('summary', '').lower()
+                        mod_categories = [cat.get('name', '').lower() for cat in mod.get('categories', [])]
+                        
+                        # Exclude if name contains non-shader keywords
+                        has_non_shader_keywords = any(non_shader in mod_name_lower for non_shader in non_shader_keywords)
+                        if has_non_shader_keywords:
+                            continue
+                        
+                        # Check if name contains shader keywords or is a known shader name
+                        has_shader_in_name = any(keyword in mod_name_lower for keyword in shader_keywords)
+                        is_known_shader = any(shader_name in mod_name_lower for shader_name in shader_names)
+                        
+                        # Include if it has shader keywords in name OR is a known shader name (more lenient)
+                        if has_shader_in_name or is_known_shader:
+                            filtered_results.append(mod)
                     
                     if filtered_results:
                         results = filtered_results
+                    # Re-sort filtered results by match score
+                    results.sort(key=calculate_match_score, reverse=True)
                 
                 elif content_type == 'datapacks':
                     # Filter for data pack related categories
