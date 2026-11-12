@@ -36,15 +36,7 @@ app = Flask(__name__)
 # Configure CORS to allow requests from Cloudflare Pages and local development
 CORS(app, resources={
     r"/*": {
-        "origins": [
-            "http://localhost:5000",
-            "http://127.0.0.1:5000",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://mod-depot.pages.dev",
-            "https://curseforge-mod-downloader-production.up.railway.app",
-            "*"  # Allow all origins during development
-        ],
+        "origins": "*",  # Allow all origins
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": False
