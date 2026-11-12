@@ -43,6 +43,13 @@ CORS(app, resources={
     }
 })
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return response
+
 # Configuration
 UPLOAD_FOLDER = Path('uploads')
 DOWNLOAD_FOLDER = Path('downloads')
