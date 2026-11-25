@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+downloads/*
+uploads/*
+*.zip
+*.html
+test_*.html
+Gemini_Generated_Image_*.jpeg
+Gemini_Generated_Image_*.png
+DEPLOYMENT.md
+RAILWAY_SETUP.md
